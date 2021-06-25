@@ -12,6 +12,11 @@ public abstract class Piece
     {
         
     }
+
+    public virtual Vector2 GetPos()
+    {
+        return new Vector2(0, 0);
+    }
     public virtual void SetColour(int colour)
     {
         
@@ -26,9 +31,9 @@ public abstract class Piece
     {
         _piece = piece;
     }
-    public virtual Vector2 Move()
+    public virtual Vector2[] Move()
     {
-        return new Vector2(0, 0);
+        return new Vector2[0];
     }
 
 

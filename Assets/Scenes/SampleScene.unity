@@ -167,6 +167,8 @@ MonoBehaviour:
   square: {fileID: 4827503693819752077, guid: 5d5f97e92b736c91baad668045a9ecea, type: 3}
   whitePawn: {fileID: 2839184021558855496, guid: 569e92c94e9f1765faba5ba9b772f104, type: 3}
   blackPawn: {fileID: 1224998214312173859, guid: ba7e7baf20ee2c2bd88b2e0e0231cc59, type: 3}
+  trail: {fileID: 4990532385650083894, guid: 1b9b646df77242d6e996c4bca4956257, type: 3}
+  _camera: {fileID: 519420031}
 --- !u!20 &519420031
 Camera:
   m_ObjectHideFlags: 0

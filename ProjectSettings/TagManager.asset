@@ -7,6 +7,8 @@ TagManager:
   - Tile
   - white
   - dark
+  - whitePawn
+  - darkPawn
   layers:
   - Default
   - TransparentFX

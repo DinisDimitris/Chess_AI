@@ -4,8 +4,6 @@ public class Board : MonoBehaviour
 {
     private static int rows = 8;
     private static int cols = 8;
-    
-    private char[] ycords = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
 
     public Color colourX;
 
@@ -16,20 +14,31 @@ public class Board : MonoBehaviour
     public GameObject whitePawn;
 
     public GameObject blackPawn;
-    
+
+    public GameObject trail;
+
+    private GameObject[] trails;
+
     private Tile[,] board = new Tile[cols, rows];
 
     private Tile[] boardUpdate = new Tile[cols * rows];
-    
+
     [SerializeField] private Camera _camera;
-    
+
     Ray ray;
     RaycastHit hit;
-    
+
+    private bool one_click;
+
+    private Vector2[] newPos;
+
+    private Vector2 originPos;
+
+    private Piece piece;
 
     private void Awake()
     {
-        if(!_camera) _camera = Camera.main;
+        if (!_camera) _camera = Camera.main;
     }
 
     public void Start()
@@ -41,7 +50,8 @@ public class Board : MonoBehaviour
                 if ((y % 2 == 0 & x % 2 == 0) | (y % 2 == 1 & x % 2 == 1))
                 {
 
-                    board[x, y] = new Tile(1, x , y , square);
+                    // whites
+                    board[x, y] = new Tile(1, x, y, square);
 
                     GameObject tile = board[x, y].getSquare();
                     SpriteRenderer spriteRenderer = tile.GetComponent<SpriteRenderer>();
@@ -49,7 +59,9 @@ public class Board : MonoBehaviour
                 }
                 else
                 {
-                    board[x, y] = new Tile(0, x , y, square);
+                    
+                    // darks
+                    board[x, y] = new Tile(0, x, y, square);
 
                     GameObject tile = board[x, y].getSquare();
                     SpriteRenderer spriteRenderer = tile.GetComponent<SpriteRenderer>();
@@ -59,18 +71,18 @@ public class Board : MonoBehaviour
                 if (y == 1)
                 {
 
-                    board[x, y].setPiece(new Pawn(x,y,1,whitePawn));
+                    board[x, y].setPiece(new Pawn(x, y, 1, whitePawn));
                 }
 
                 else if (y == 6)
                 {
-                    board[x, y].setPiece(new Pawn(x,y,0,blackPawn));
+                    board[x, y].setPiece(new Pawn(x, y, 0, blackPawn));
                 }
-                
-                
-                board[x,y].setSquare(Instantiate(board[x, y].getSquare(), new Vector2(x, y), Quaternion.identity));
+
+
+                board[x, y].setSquare(Instantiate(board[x, y].getSquare(), new Vector2(x, y), Quaternion.identity));
                 Piece currentPiece = board[x, y].getPiece();
-                
+
                 if (currentPiece != null)
                 {
                     if (currentPiece.GetColour().Equals(1))
@@ -80,15 +92,16 @@ public class Board : MonoBehaviour
                     else if (currentPiece.GetColour().Equals(0))
                         currentPiece.SetGameObject(Instantiate(blackPawn, new Vector2(x, y), Quaternion.identity));
                 }
-                
-                
+
+
             }
         }
 
-        
+
         // shrink to array to access during update
         boardUpdate = jagg2dArray();
     }
+
     private Tile[] jagg2dArray()
     {
 
@@ -108,27 +121,117 @@ public class Board : MonoBehaviour
         return newBoard;
 
     }
-    private void Update()
+
+    private void FixedUpdate()
     {
         ray = _camera.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out hit))
         {
-                    foreach (Tile tile in boardUpdate)
-                    {
-                        if (hit.collider.gameObject.transform.position.Equals(tile.getSquare().transform.position))
-                        {
-                            if (Input.GetMouseButtonDown(0))
-                            {
-                                Piece piece = tile.getPiece();
-                                if (piece != null)
-                                {
-                                    Vector2 newPos = piece.Move();
+            
+            for (int i = 0; i < boardUpdate.Length; i++)
+            {
 
-                                    piece.GetGameObject().transform.position = newPos;
+                if (hit.collider.gameObject.transform.position.Equals(boardUpdate[i].getSquare().transform.position))
+                {
+
+                    if (Input.GetMouseButtonDown(0))
+                    {
+                        if (!one_click)
+
+                        {
+                            piece = boardUpdate[i].getPiece();
+
+                            //TODO check for piece type 
+                            if (piece != null)
+                            {
+
+                                newPos = piece.Move();
+
+                                originPos = piece.GetPos();
+                                
+                                int trailSpace = 0;
+                                
+                                // Allocate fixed space for direction bullets based on change in direction
+                                foreach (var dir  in newPos)
+                                {
+                                    if (!originPos.x.Equals(dir.x)) trailSpace += (int) dir.x;
+
+                                    if (!originPos.y.Equals(dir.y)) trailSpace += (int) dir.y;
+                                }
+                                trails = new GameObject[trailSpace];
+
+
+                                foreach (var dir in newPos)
+                                {
+                                    if (piece.GetColour() == 1)
+                                    {
+
+                                    
+                                        for (int trailLength = 0; trailLength < dir.y - originPos.y; trailLength++)
+                                        {
+                                            trails[trailLength] = Instantiate(trail, new Vector2(originPos.x,
+                                                    originPos.y + trailLength + 1
+                                                ),
+                                                Quaternion.identity);
+
+                                        }
+
+                                    }
+
+                                    else
+                                    {
+                                        for (int trailLength = 0; trailLength < originPos.y - dir.y; trailLength++)
+                                        {
+                                            trails[trailLength] = Instantiate(trail, new Vector2(originPos.x,
+                                                    originPos.y - trailLength - 1
+                                                ),
+                                                Quaternion.identity);
+
+                                        }
+                                    }
+                                }
+
+
+
+                                one_click = true;
+                            }
+                        }
+
+                        else
+                        {
+                            foreach (var dir in newPos)
+                            {
+                                if (hit.collider.gameObject.transform.position.Equals(dir))
+                                {
+                                    one_click = false;
+                                    for (int j = 0; j < trails.Length; j++) Destroy(trails[j]);
+                                    // border check
+                                    if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
+                                        //TODO index this on 1d array
+                                        if (board[(int) dir.x, (int) dir.y].getPiece() == null)
+                                        {
+
+                                            piece.GetGameObject().transform.position = dir;
+
+                                            piece.SetPos((int) dir.x, (int) dir.y);
+
+                                            boardUpdate[i].setPiece(null);
+
+                                            //TODO index this on 1d array
+                                            board[(int) dir.x, (int) dir.y].setPiece(piece);
+
+
+                                        }
                                 }
                             }
                         }
+
+
+
                     }
+                }
+            }
         }
     }
 }
+

@@ -7,7 +7,7 @@ public class Pawn : Piece
   
   private int _colour;
   
-
+  
   private GameObject _piece;
 
   
@@ -21,7 +21,7 @@ public class Pawn : Piece
 
   }
 
-  public Vector2 GetPos()
+  public override Vector2 GetPos()
   {
     return new Vector2(_x, _y);
   }
@@ -53,21 +53,31 @@ public class Pawn : Piece
     return false;
   }
 
-  public override Vector2 Move()
+  public override Vector2[] Move()
   {
     if (GetColour() == 1)
     {
+      
+      
       Vector2 cords = GetPos();
-      SetPos((int) cords.x, (int) cords.y+1 );
-      return GetPos() ;
+      Vector2[] legalMoves = new[]
+      {
+        new Vector2(cords.x, cords.y + 1)
+      };
+
+      return legalMoves;
     }
 
     else
     {
       Vector2 cords = GetPos();
-      SetPos((int) cords.x, (int) cords.y-1 );
-      return GetPos() ;
       
+      Vector2[] legalMoves = new[]
+      {
+        new Vector2(cords.x, cords.y - 1)
+      };
+      return legalMoves;
+
     }
     
 
