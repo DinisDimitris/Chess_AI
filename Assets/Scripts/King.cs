@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class King : Piece
@@ -11,18 +9,31 @@ public class King : Piece
    
    
    private GameObject _piece;
+
+   private string _name;
  
    
-   public King(int x, int y, int color, GameObject piece)
+   public King(string name, int x, int y, int color, GameObject piece)
    {
      SetPos(x,y);
      SetColour(color);
+     SetName(name);
  
  
      _piece = piece; 
  
    }
- 
+
+   public override void SetName(string name)
+   {
+     _name = name;
+   }
+
+   public override string GetName()
+   {
+     return _name;
+   }
+
    public Vector2 GetPos()
    {
      return new Vector2(_x, _y);
@@ -60,7 +71,7 @@ public class King : Piece
   
        Vector2 cords = GetPos();
 
-       Vector2[] LegalMoves = new[]
+       Vector2[] legalMoves = 
        {
          new Vector2(cords.x, cords.y + 1),
          new Vector2(cords.x + 1, cords.y + 1),
@@ -74,7 +85,7 @@ public class King : Piece
 
       
        
-       return LegalMoves;
+       return legalMoves;
 
    }
  

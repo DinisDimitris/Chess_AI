@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Board : MonoBehaviour
@@ -8,16 +10,21 @@ public class Board : MonoBehaviour
     public Color colourX;
 
     public Color colourY;
-
+    
     public GameObject square;
 
     public GameObject whitePawn;
 
     public GameObject blackPawn;
 
+    public GameObject whiteQueen;
+
+    public GameObject blackQueen;
+
+
+    public Color hitColor;
     public GameObject trail;
 
-    private GameObject[] trails;
 
     private Tile[,] board = new Tile[cols, rows];
 
@@ -30,11 +37,13 @@ public class Board : MonoBehaviour
 
     private bool one_click;
 
-    private Vector2[] newPos;
+    private Vector2[] legalMoves;
 
     private Vector2 originPos;
 
     private Piece piece;
+
+    private Tile prevTile;
 
     private void Awake()
     {
@@ -50,7 +59,7 @@ public class Board : MonoBehaviour
                 if ((y % 2 == 0 & x % 2 == 0) | (y % 2 == 1 & x % 2 == 1))
                 {
 
-                    // whites
+                    // white tiles
                     board[x, y] = new Tile(1, x, y, square);
 
                     GameObject tile = board[x, y].getSquare();
@@ -59,8 +68,8 @@ public class Board : MonoBehaviour
                 }
                 else
                 {
-                    
-                    // darks
+
+                    // dark tiles
                     board[x, y] = new Tile(0, x, y, square);
 
                     GameObject tile = board[x, y].getSquare();
@@ -71,34 +80,38 @@ public class Board : MonoBehaviour
                 if (y == 1)
                 {
 
-                    board[x, y].setPiece(new Pawn(x, y, 1, whitePawn));
+                    board[x, y].setPiece(new Pawn("pawn", x, y, 1, whitePawn));
                 }
 
                 else if (y == 6)
                 {
-                    board[x, y].setPiece(new Pawn(x, y, 0, blackPawn));
+                    board[x, y].setPiece(new Pawn("pawn", x, y, 0, blackPawn));
                 }
-
+                
+                
 
                 board[x, y].setSquare(Instantiate(board[x, y].getSquare(), new Vector2(x, y), Quaternion.identity));
                 Piece currentPiece = board[x, y].getPiece();
-
+                
                 if (currentPiece != null)
                 {
-                    if (currentPiece.GetColour().Equals(1))
-                        currentPiece.SetGameObject(Instantiate(whitePawn, new Vector2(x, y), Quaternion.identity));
+                    if (currentPiece.GetName().Equals("pawn"))
+                    {
+                        if (currentPiece.GetColour().Equals(1))
+                            currentPiece.SetGameObject(Instantiate(whitePawn, new Vector2(x, y), Quaternion.identity));
 
 
-                    else if (currentPiece.GetColour().Equals(0))
-                        currentPiece.SetGameObject(Instantiate(blackPawn, new Vector2(x, y), Quaternion.identity));
+                        else if (currentPiece.GetColour().Equals(0))
+                            currentPiece.SetGameObject(Instantiate(blackPawn, new Vector2(x, y), Quaternion.identity));
+                    }
+                    
+                    
                 }
 
 
             }
         }
-
-
-        // shrink to array to access during update
+        // shrink to 1d array to access during update
         boardUpdate = jagg2dArray();
     }
 
@@ -122,7 +135,16 @@ public class Board : MonoBehaviour
 
     }
 
-    private void FixedUpdate()
+    private void DestroyAll(string tag)
+    {
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag(tag);
+        for(int i=0; i< enemies.Length; i++)
+        {
+            Destroy(enemies[i]);
+        }
+    }
+
+    private void Update()
     {
         ray = _camera.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out hit))
@@ -136,6 +158,7 @@ public class Board : MonoBehaviour
 
                     if (Input.GetMouseButtonDown(0))
                     {
+                        
                         if (!one_click)
 
                         {
@@ -144,67 +167,76 @@ public class Board : MonoBehaviour
                             //TODO check for piece type 
                             if (piece != null)
                             {
-
-                                newPos = piece.Move();
+                                legalMoves = piece.Move();
 
                                 originPos = piece.GetPos();
                                 
-                                int trailSpace = 0;
                                 
-                                // Allocate fixed space for direction bullets based on change in direction
-                                foreach (var dir  in newPos)
+                                //TODO optimize 
+                                GameObject tile = boardUpdate[i].getSquare();
+                                SpriteRenderer spriteRenderer = tile.GetComponent<SpriteRenderer>();
+                                spriteRenderer.color = hitColor;
+
+                                prevTile = boardUpdate[i];
+                                
+                                foreach (var dir in legalMoves)
                                 {
-                                    if (!originPos.x.Equals(dir.x)) trailSpace += (int) dir.x;
 
-                                    if (!originPos.y.Equals(dir.y)) trailSpace += (int) dir.y;
-                                }
-                                trails = new GameObject[trailSpace];
-
-
-                                foreach (var dir in newPos)
-                                {
-                                    if (piece.GetColour() == 1)
+                                    if (board[(int) dir.x, (int) dir.y].getPiece() == null)
                                     {
-
-                                    
-                                        for (int trailLength = 0; trailLength < dir.y - originPos.y; trailLength++)
+                                        if (piece.GetColour() == 1)
                                         {
-                                            trails[trailLength] = Instantiate(trail, new Vector2(originPos.x,
-                                                    originPos.y + trailLength + 1
-                                                ),
-                                                Quaternion.identity);
+                                            for (int trailLength = 0; trailLength < dir.y - originPos.y; trailLength++)
+                                            {
 
+                                                Instantiate(trail, new Vector2(originPos.x,
+                                                        originPos.y + trailLength + 1
+                                                    ),
+                                                    Quaternion.identity);
+
+                                            }
+
+                                        }
+                                        else
+                                        {
+
+                                            for (int trailLength = 0; trailLength < originPos.y - dir.y; trailLength++)
+                                            {
+                                                Instantiate(trail, new Vector2(originPos.x,
+                                                        originPos.y - trailLength - 1
+                                                    ),
+                                                    Quaternion.identity);
+
+                                            }
                                         }
 
                                     }
-
-                                    else
-                                    {
-                                        for (int trailLength = 0; trailLength < originPos.y - dir.y; trailLength++)
-                                        {
-                                            trails[trailLength] = Instantiate(trail, new Vector2(originPos.x,
-                                                    originPos.y - trailLength - 1
-                                                ),
-                                                Quaternion.identity);
-
-                                        }
-                                    }
                                 }
-
-
-
+                                
                                 one_click = true;
                             }
                         }
 
                         else
                         {
-                            foreach (var dir in newPos)
+                            foreach (var dir in legalMoves)
                             {
+                               
                                 if (hit.collider.gameObject.transform.position.Equals(dir))
                                 {
                                     one_click = false;
-                                    for (int j = 0; j < trails.Length; j++) Destroy(trails[j]);
+                                    
+                                    DestroyAll("bullet");
+                                    
+                                    
+                                    //TODO optimize
+                                    GameObject tile = prevTile.getSquare();
+                                    SpriteRenderer spriteRenderer = tile.GetComponent<SpriteRenderer>();
+                                        
+                                    if ( prevTile.getColour() == 0 ) spriteRenderer.color = colourX;
+
+                                    if ( prevTile.getColour() == 1) spriteRenderer.color = colourY;
+                                    
                                     // border check
                                     if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
                                         //TODO index this on 1d array
@@ -223,6 +255,22 @@ public class Board : MonoBehaviour
 
                                         }
                                 }
+
+                                else
+                                {
+                                    DestroyAll("bullet");
+
+                                    one_click = false;
+                                    
+                                    GameObject tile = prevTile.getSquare();
+                                    SpriteRenderer spriteRenderer = tile.GetComponent<SpriteRenderer>();
+                                        
+                                    if ( prevTile.getColour() == 0 ) spriteRenderer.color = colourX;
+
+                                    if ( prevTile.getColour() == 1) spriteRenderer.color = colourY;
+
+                                }
+                                
                             }
                         }
 

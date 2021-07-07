@@ -8,6 +8,16 @@ public abstract class Piece
         return 0;
     }
 
+    public virtual void SetName(string name)
+    {
+        
+    }
+
+    public virtual string GetName()
+    {
+        return null;
+    }
+
     public virtual void SetPos(int x, int y)
     {
         

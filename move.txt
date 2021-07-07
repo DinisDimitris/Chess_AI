@@ -1,3 +1,76 @@
-So basically get the mouse position on world screen in the update function and whenever the mouse vector 
-intersects with a tile then check what piece contains and call the relevant move function from the tile and 
-update the game object's position according to thee new coordinates returned by the function
+cords = {
+(4,0) => "white_king",
+(4,7) => "black_king", 
+(0,0) => "white_rook", 
+(7,0) => "white_rook",
+(0,7) => "black_rook", 
+(7,7) => "black_rook",
+(1,0) => "white_horse", 
+(6,0) => "white_horse",
+(1,7) => "black_horse",
+(6,7) => "black_horse", 
+(2,0) => "white_crazyman", 
+(5,0) => white_crazyman", 
+(2,7) => "black_crazyman", 
+(5,7) => "black_Crazyman", 
+(3,0) => "white_queen", 
+(3,7) => "black_queen"
+
+}
+
+
+
+
+
+     else if (currentPiece.GetName().Equals("king"))
+                    {
+                        if (currentPiece.GetColour().Equals(1)) 
+                            currentPiece.SetGameObject(Instantiate(whiteKing,new Vector2(x,y),Quaternion.identity));
+                        
+                        else if(currentPiece.GetColour().Equals(0))
+                            currentPiece.SetGameObject(Instantiate(blackKing,new Vector2(x,y),Quaternion.identity));
+                    }
+                    
+                    else if (currentPiece.GetName().Equals("rook"))
+                    {
+                            currentPiece.SetGameObject(Instantiate(blackRook, new Vector2(x,y),Quaternion.identity));
+                     
+                    }
+                    
+                    else if (currentPiece.GetName().Equals("horse"))
+                    {
+                        if (currentPiece.GetColour().Equals(1))
+                        {
+                            currentPiece.SetGameObject(Instantiate(whiteHorse , new Vector2(x,y),Quaternion.identity));
+                        }
+
+                        else
+                        {
+                            currentPiece.SetGameObject(Instantiate(blackHorse,new Vector2(x,y),Quaternion.identity));
+                        }
+                    }
+                    
+                    else if (currentPiece.GetName().Equals("queen"))
+                    {
+                        if (currentPiece.GetColour().Equals(1))
+                        {
+                            currentPiece.SetGameObject(Instantiate(whiteQueen,new Vector2(x,y),Quaternion.identity));
+                        }
+                        else
+                        {
+                            currentPiece.SetGameObject(Instantiate(blackQueen,new Vector2(x,y),Quaternion.identity));
+                        }
+                    }
+                    
+                    else if (currentPiece.GetName().Equals("crazyman"))
+                    {
+                        if (currentPiece.GetColour().Equals(1))
+                        {
+                            currentPiece.SetGameObject(Instantiate(whiteCrazyman,new Vector2(x,y),Quaternion.identity));
+                        }
+
+                        else
+                        {
+                            currentPiece.SetGameObject(Instantiate(blackCrazyman,new Vector2(x,y),Quaternion.identity));
+                        }
+                    }

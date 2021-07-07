@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Rook : Piece
@@ -11,16 +9,28 @@ public class Rook : Piece
      
      
      private GameObject _piece;
+
+     private string _name;
    
      
-     public Rook(int x, int y, int color, GameObject piece)
+     public Rook(string name, int x, int y, int color, GameObject piece)
      {
        SetPos(x,y);
        SetColour(color);
-   
+       SetName(name);
    
        _piece = piece; 
    
+     }
+     
+     public override void SetName(string name)
+     {
+       _name = name;
+     }
+
+     public override string GetName()
+     {
+       return _name;
      }
    
      public Vector2 GetPos()
