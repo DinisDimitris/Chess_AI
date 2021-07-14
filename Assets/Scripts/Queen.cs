@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class Queen : Piece
 {
@@ -32,7 +34,7 @@ public class Queen : Piece
     return _name;
   }
 
-  public Vector2 GetPos()
+  public override Vector2 GetPos()
   {
     return new Vector2(_x, _y);
   }
@@ -62,6 +64,30 @@ public class Queen : Piece
     }
 
     return false;
+  }
+  
+  public override Vector2[] Move()
+  {
+    
+    Vector2 cords = GetPos();
+
+    List<Vector2> moves = new List<Vector2>();
+    
+      for (int x = 0; x < 8; x++)
+      {
+        moves.Add(new Vector2(cords.x + x, cords.y));
+        moves.Add(new Vector2(cords.x -x , cords.y));
+        
+      }
+
+      for (int y = 0; y < 8; y++)
+      {
+        moves.Add(new Vector2(cords.x, cords.y + y));
+        moves.Add(new Vector2(cords.x, cords.y -y));
+      }
+
+      return moves.ToArray();
+
   }
 
   

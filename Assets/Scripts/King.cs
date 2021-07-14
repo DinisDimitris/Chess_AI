@@ -34,7 +34,7 @@ public class King : Piece
      return _name;
    }
 
-   public Vector2 GetPos()
+   public override Vector2 GetPos()
    {
      return new Vector2(_x, _y);
    }
@@ -55,16 +55,6 @@ public class King : Piece
      return _colour;
    }
    
-   public override  bool Defeat()
-   {
-     bool isAlive = GameObject.Find("Pawn");
-     if (isAlive)
-     {
-       return true;
-     }
- 
-     return false;
-   }
  
    public override Vector2[] Move()
    {

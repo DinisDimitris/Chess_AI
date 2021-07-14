@@ -1,7 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Quaternion = UnityEngine.Quaternion;
+using Vector2 = UnityEngine.Vector2;
 
 public class Board : MonoBehaviour
 {
@@ -14,11 +15,12 @@ public class Board : MonoBehaviour
     
     public GameObject square;
 
+    
+    // prefabs used to set game objects to the board
     public GameObject whitePawn;
 
     public GameObject blackPawn;
 
-    // prefabs used to set game objects to the board
     public GameObject whiteQueen;
 
     public GameObject blackQueen;
@@ -41,7 +43,6 @@ public class Board : MonoBehaviour
 
     public Color hitColor;
     public GameObject trail;
-
 
     private Tile[,] board = new Tile[cols, rows];
 
@@ -125,10 +126,11 @@ public class Board : MonoBehaviour
                 else if (x == 2 && y == 0 || x == 5 && y == 0) board[x,y].setPiece(new Crazyman("crazyman",x,y,1,whiteCrazyman));
                 
                 else if (x == 2 && y ==7 || x == 5 && y == 7) board[x,y].setPiece(new Crazyman("crazyman",x,y,0,blackCrazyman));
+                
 
 
 
-                board[x, y].setSquare(Instantiate(board[x, y].getSquare(), new Vector2(x, y), Quaternion.identity));
+        board[x, y].setSquare(Instantiate(board[x, y].getSquare(), new Vector2(x, y), Quaternion.identity));
                 Piece currentPiece = board[x, y].getPiece();
                 
                 if (currentPiece?.GetGameObject() )
@@ -198,8 +200,7 @@ public class Board : MonoBehaviour
                                 legalMoves = piece.Move();
 
                                 originPos = piece.GetPos();
-                                
-                                
+
                                 //TODO optimize 
                                 GameObject tile = boardUpdate[i].getSquare();
                                 SpriteRenderer spriteRenderer = tile.GetComponent<SpriteRenderer>();
@@ -207,17 +208,16 @@ public class Board : MonoBehaviour
 
                                 prevTile = boardUpdate[i];
                                 
+                                //draw trail
                                 foreach (var dir in legalMoves)
                                 {
                                     if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
                                     {
-
-
+                                        //TODO shrink this to 1d array search
                                         if (board[(int) dir.x, (int) dir.y].getPiece() == null)
                                         {
                                             Instantiate(trail, dir, Quaternion.identity);
                                         }
-
                                         else
                                         {
                                             List<Vector2> temp = legalMoves.ToList();
@@ -257,32 +257,36 @@ public class Board : MonoBehaviour
                                         }
                                     }
                                 }
-                                
-                                one_click = true;
                             }
                         }
+                                
+                        one_click = true;
+                    }
+                }
 
-                        else
-                        {
+                else
+                {
                             foreach (var dir in legalMoves)
                             {
                                
                                 if (hit.collider.gameObject.transform.position.Equals(dir))
                                 {
+                                    
                                     one_click = false;
-                                    
+
                                     DestroyAll("bullet");
-                                    
-                                    
+
                                     //TODO optimize
                                     GameObject tile = prevTile.getSquare();
                                     SpriteRenderer spriteRenderer = tile.GetComponent<SpriteRenderer>();
-                                        
+                                    
+                                    
+                                    prevTile.setPiece(null);
+                                    
                                     if ( prevTile.getColour() == 0 ) spriteRenderer.color = colourX;
 
                                     if ( prevTile.getColour() == 1) spriteRenderer.color = colourY;
                                     
-                                    prevTile.setPiece(null);
                                     // border check
                                     if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
                                         //TODO index this on 1d array
@@ -292,8 +296,8 @@ public class Board : MonoBehaviour
                                             piece.GetGameObject().transform.position = dir;
 
                                             piece.SetPos((int) dir.x, (int) dir.y);
+                                            
 
-                                            //TODO index this on 1d array
                                             board[(int) dir.x, (int) dir.y].setPiece(piece);
 
 
@@ -307,22 +311,24 @@ public class Board : MonoBehaviour
                                     one_click = false;
                                     
                                     GameObject tile = prevTile.getSquare();
+                                    
                                     SpriteRenderer spriteRenderer = tile.GetComponent<SpriteRenderer>();
                                         
                                     if ( prevTile.getColour() == 0 ) spriteRenderer.color = colourX;
 
                                     if ( prevTile.getColour() == 1) spriteRenderer.color = colourY;
+                                    
+                                    
 
                                 }
                                 
                             }
-                        }
-
-
-
-                    }
                 }
+
+
+
             }
         }
     }
 }
+ 

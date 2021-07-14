@@ -33,8 +33,27 @@ public class Horse : Piece
       {
         return _name;
       }
-    
-      public Vector2 GetPos()
+
+      public override Vector2[] Move()
+      {
+        Vector2 og = GetPos();
+
+        Vector2[] legalMoves =
+        {
+          new Vector2(og.x + 1, og.y + 2),
+          new Vector2(og.x - 1, og.y + 2),
+          new Vector2(og.x + 1, og.y - 2),
+          new Vector2(og.x - 1, og.y - 2),
+          new Vector2(og.x + 2, og.y - 1),
+          new Vector2(og.x - 2, og.y - 1),
+          new Vector2(og.x + 2, og.y + 1),
+          new Vector2(og.x - 2, og.y + 1)
+        };
+
+        return legalMoves;
+      }
+
+      public override Vector2 GetPos()
       {
         return new Vector2(_x, _y);
       }

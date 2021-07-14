@@ -33,7 +33,7 @@ public class Rook : Piece
        return _name;
      }
    
-     public Vector2 GetPos()
+     public override Vector2 GetPos()
      {
        return new Vector2(_x, _y);
      }

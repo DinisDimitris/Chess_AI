@@ -167,8 +167,16 @@ MonoBehaviour:
   square: {fileID: 4827503693819752077, guid: 5d5f97e92b736c91baad668045a9ecea, type: 3}
   whitePawn: {fileID: 2839184021558855496, guid: 569e92c94e9f1765faba5ba9b772f104, type: 3}
   blackPawn: {fileID: 1224998214312173859, guid: ba7e7baf20ee2c2bd88b2e0e0231cc59, type: 3}
-  whiteQueen: {fileID: 0}
-  blackQueen: {fileID: 0}
+  whiteQueen: {fileID: 3054126955146894551, guid: 73cb9f0d9bcd3df58a7284b71f3fefd6, type: 3}
+  blackQueen: {fileID: 1391548417707163899, guid: ef0d0637303300958a6fe6909a84c55e, type: 3}
+  whiteKing: {fileID: 1714132742572871844, guid: c7951112170fa55ba94d1e511ea1d9b4, type: 3}
+  blackKing: {fileID: 5106939457549066456, guid: 7eb71605804c71ddaab8cd64c87e6354, type: 3}
+  whiteRook: {fileID: 3090008690554166191, guid: 82600349b9aa660cf87a06903bf4e221, type: 3}
+  blackRook: {fileID: 1428750623098407601, guid: 33edff9429137fabb98ed536c6d16618, type: 3}
+  whiteHorse: {fileID: 5585870446684712043, guid: 93b241e857075fba096887cdf57605a7, type: 3}
+  blackHorse: {fileID: 986926656292297542, guid: fa7b771a46f933893bb1ea031e8cf250, type: 3}
+  whiteCrazyman: {fileID: 6717863927225325254, guid: 3c4dc607e0dbb9ca0b3056d0dd231d4e, type: 3}
+  blackCrazyman: {fileID: 5534909393572321940, guid: 31a7c73eed89cbc148dd7c3df54b735f, type: 3}
   hitColor: {r: 0.764151, g: 0.3686606, b: 0.28475437, a: 1}
   trail: {fileID: 4990532385650083894, guid: 1b9b646df77242d6e996c4bca4956257, type: 3}
   _camera: {fileID: 519420031}
