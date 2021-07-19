@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -63,7 +64,7 @@ public class Pawn : Piece
     return false;
   }
 
-  public override Vector2[] Move()
+  public override List<Vector2> Move()
   {
 
     int initialWhitePos = 1;
@@ -75,7 +76,7 @@ public class Pawn : Piece
     
       if (GetPos().y.Equals(initialWhitePos))
       {
-        Vector2[] legalMoves =
+        List<Vector2> legalMoves =new List<Vector2>()
         {
           new Vector2(cords.x, cords.y + 1),
           new Vector2(cords.x, cords.y + 2),
@@ -86,7 +87,7 @@ public class Pawn : Piece
 
       else
       {
-        Vector2[] legalMoves =
+        List<Vector2>  legalMoves = new List<Vector2>()
         {
           new Vector2(cords.x, cords.y + 1)
         };
@@ -104,7 +105,7 @@ public class Pawn : Piece
       if (GetPos().y.Equals(initialBlackPos))
       {
               
-        Vector2[] legalMoves = 
+        List<Vector2> legalMoves =  new List<Vector2>()
         {
         
           new Vector2(cords.x, cords.y - 1),
@@ -119,7 +120,7 @@ public class Pawn : Piece
       else
       {
 
-        Vector2[] legalMoves =
+        List<Vector2> legalMoves = new List<Vector2>()
         {
 
           new Vector2(cords.x, cords.y - 1),

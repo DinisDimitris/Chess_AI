@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class Piece
@@ -41,9 +42,9 @@ public abstract class Piece
     {
         _piece = piece;
     }
-    public virtual Vector2[] Move()
+    public virtual List<Vector2> Move()
     {
-        return new Vector2[0];
+        return new List<Vector2>();
     }
 
 

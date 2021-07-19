@@ -66,7 +66,7 @@ public class Queen : Piece
     return false;
   }
   
-  public override Vector2[] Move()
+  public override List<Vector2> Move()
   {
     
     Vector2 cords = GetPos();
@@ -86,7 +86,7 @@ public class Queen : Piece
         moves.Add(new Vector2(cords.x, cords.y -y));
       }
 
-      return moves.ToArray();
+      return moves;
 
   }
 

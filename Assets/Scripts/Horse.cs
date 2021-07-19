@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Horse : Piece
@@ -34,11 +35,11 @@ public class Horse : Piece
         return _name;
       }
 
-      public override Vector2[] Move()
+      public override List<Vector2> Move()
       {
         Vector2 og = GetPos();
 
-        Vector2[] legalMoves =
+        List<Vector2> legalMoves = new List<Vector2>()
         {
           new Vector2(og.x + 1, og.y + 2),
           new Vector2(og.x - 1, og.y + 2),

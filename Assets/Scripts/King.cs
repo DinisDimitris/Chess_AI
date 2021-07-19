@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class King : Piece
@@ -56,12 +57,12 @@ public class King : Piece
    }
    
  
-   public override Vector2[] Move()
+   public override List<Vector2> Move()
    {
   
        Vector2 cords = GetPos();
 
-       Vector2[] legalMoves = 
+       List<Vector2> legalMoves =  new List<Vector2>()
        {
          new Vector2(cords.x, cords.y + 1),
          new Vector2(cords.x + 1, cords.y + 1),

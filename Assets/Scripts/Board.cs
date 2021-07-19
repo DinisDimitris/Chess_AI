@@ -54,13 +54,15 @@ public class Board : MonoBehaviour
 
     private bool one_click;
 
-    private Vector2[] legalMoves;
+    private List<Vector2> legalMoves;
 
     private Vector2 originPos;
 
     private Piece piece;
 
     private Tile prevTile;
+
+    private List<GameObject> bullets = new List<GameObject>();
 
     private void Awake()
     {
@@ -73,7 +75,7 @@ public class Board : MonoBehaviour
         {
             for (int x = 0; x < rows; x++)
             {
-                if ((y % 2 == 0 & x % 2 == 0) | (y % 2 == 1 & x % 2 == 1))
+                if ((y % 2 == 0 && x % 2 == 0) | (y % 2 == 1 && x % 2 == 1))
                 {
 
                     // white tiles
@@ -94,18 +96,11 @@ public class Board : MonoBehaviour
                     spriteRenderer.color = colourX;
                 }
 
-                if (y == 1)
-                {
-
-                    board[x, y].setPiece(new Pawn("pawn", x, y, 1, whitePawn));
-                }
-
-                else if (y == 6)
-                {
-                    board[x, y].setPiece(new Pawn("pawn", x, y, 0, blackPawn));
-                }
-                
                 //cant instantiate game objects in constructors
+                if (y == 1) board[x, y].setPiece(new Pawn("pawn", x, y, 1, whitePawn));
+
+                else if (y == 6) board[x, y].setPiece(new Pawn("pawn", x, y, 0, blackPawn));
+                
                 else if (x == 4 && y == 0) board[x, y].setPiece(new King("king", x, y, 1, whiteKing));
 
                 else if (x == 4 && y == 7) board[x, y].setPiece(new King("king", x, y, 0, blackKing));
@@ -166,10 +161,20 @@ public class Board : MonoBehaviour
     private void DestroyAll(string tag)
     {
         GameObject[] enemies = GameObject.FindGameObjectsWithTag(tag);
-        for(int i=0; i< enemies.Length; i++)
+        for(int i=enemies.Length - 1; i >= 0 ; i--)
         {
             Destroy(enemies[i]);
         }
+    }
+
+    private void ResetColour(Tile tile)
+    {
+        GameObject obj = tile.getSquare();
+        SpriteRenderer spriteRenderer = obj.GetComponent<SpriteRenderer>();
+                                        
+        if ( tile.getColour() == 0 ) spriteRenderer.color = colourX;
+
+        if ( tile.getColour() == 1) spriteRenderer.color = colourY;
     }
 
     private void Update()
@@ -207,53 +212,51 @@ public class Board : MonoBehaviour
 
                                 prevTile = boardUpdate[i];
                                 
-                                foreach (var dir in legalMoves)
+                                for (int t = 0; t < legalMoves.Count; t ++)
                                 {
+                                    Vector2 dir = legalMoves[t];
                                     if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
                                     {
 
-
                                         if (board[(int) dir.x, (int) dir.y].getPiece() == null)
                                         {
-                                            Instantiate(trail, dir, Quaternion.identity);
+                                            bullets.Add(Instantiate(trail, dir, Quaternion.identity));
+                                           
                                         }
-
                                         else
                                         {
-                                            List<Vector2> temp = legalMoves.ToList();
-                                            GameObject[] trails = GameObject.FindGameObjectsWithTag("bullet");
-
-
                                             Vector2 dist = dir - originPos;
+                                            
+                                            Debug.Log( "dir" + dir + "originPos" + originPos + "minus will be" + dist );
 
                                             bool xblocked = dist.x == 0;
                                             bool yblocked = dist.y == 0;
-
+                                                
                                             if (xblocked && !yblocked)
                                             {
-                                                for (int j = 0; j < temp.Count; j++)
+                                                for (int j = legalMoves.Count-1; j >=0; j--)
                                                 {
-                                                    for (int k = 0; k < rows;k ++){
-
-                                                        if (temp[j].Equals(new Vector2(originPos.x,
-                                                            originPos.y + dist.y + k)))
+                                                    for (int k = 1; k < cols ; k++)
+                                                    {
+                                                        if (legalMoves[j].Equals(new Vector2(originPos.x,dir.y + k)) && dist.y > 0)
                                                         {
-                                                            foreach (var t in trails)
+                                                            for (int z = bullets.Count - 1; z >= 0 ; z--)
                                                             {
-                                                                // remove trail 
-                                                                if (t.transform.position.Equals(temp[j])) Destroy(t);
+                                                                Debug.Log(" z" + z + "bullet:" + bullets[z].transform.position);
+                                                                if (bullets[z].transform.position
+                                                                    .Equals(new Vector2(originPos.x, dir.y + k)))
+                                                                {
+                                                                    Debug.Log("removed " +bullets[z].transform.position);
+                                                                    Destroy(bullets[z]);
+                                                                    bullets.RemoveAt(z);
+                                                                } 
                                                             }
-
                                                             // remove the move with the same direction
-                                                            temp.Remove(temp[j]);
+                                                            legalMoves.RemoveAt(j);
                                                         }
                                                     }
                                                 }
                                             }
-
-                                            temp.Remove(dir);
-            
-                                            legalMoves = temp.ToArray();
                                         }
                                     }
                                 }
@@ -266,52 +269,40 @@ public class Board : MonoBehaviour
                         {
                             foreach (var dir in legalMoves)
                             {
-                               
-                                if (hit.collider.gameObject.transform.position.Equals(dir))
+
+                                for (int cnt = bullets.Count - 1; cnt >= 0; cnt--)
+                                {
+                                    if ( dir.Equals(bullets[cnt].transform.position) ) 
+                                    {
+                                        Destroy(bullets[cnt]);
+                                        bullets.RemoveAt(cnt);
+                                    }
+                                }
+                                //TODO index this on 1d array
+                                if (hit.collider.gameObject.transform.position.Equals(dir) && board[(int) dir.x, (int) dir.y].getPiece() == null )
                                 {
                                     one_click = false;
-                                    
-                                    DestroyAll("bullet");
-                                    
-                                    
                                     //TODO optimize
-                                    GameObject tile = prevTile.getSquare();
-                                    SpriteRenderer spriteRenderer = tile.GetComponent<SpriteRenderer>();
-                                        
-                                    if ( prevTile.getColour() == 0 ) spriteRenderer.color = colourX;
-
-                                    if ( prevTile.getColour() == 1) spriteRenderer.color = colourY;
-                                    
+                                    ResetColour(prevTile);
                                     prevTile.setPiece(null);
                                     // border check
                                     if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
+                                    {
+                                        piece.GetGameObject().transform.position = dir;
+
+                                        piece.SetPos((int) dir.x, (int) dir.y);
+
                                         //TODO index this on 1d array
-                                        if (board[(int) dir.x, (int) dir.y].getPiece() == null)
-                                        {
-
-                                            piece.GetGameObject().transform.position = dir;
-
-                                            piece.SetPos((int) dir.x, (int) dir.y);
-
-                                            //TODO index this on 1d array
-                                            board[(int) dir.x, (int) dir.y].setPiece(piece);
-
-
-                                        }
+                                        board[(int) dir.x, (int) dir.y].setPiece(piece);
+                                    }
                                 }
 
                                 else
                                 {
-                                    DestroyAll("bullet");
 
                                     one_click = false;
                                     
-                                    GameObject tile = prevTile.getSquare();
-                                    SpriteRenderer spriteRenderer = tile.GetComponent<SpriteRenderer>();
-                                        
-                                    if ( prevTile.getColour() == 0 ) spriteRenderer.color = colourX;
-
-                                    if ( prevTile.getColour() == 1) spriteRenderer.color = colourY;
+                                    ResetColour(prevTile);
 
                                 }
                                 
