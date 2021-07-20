@@ -77,15 +77,13 @@ public class Queen : Piece
       {
         moves.Add(new Vector2(cords.x + x, cords.y));
         moves.Add(new Vector2(cords.x -x , cords.y));
-        
+        moves.Add(new Vector2(cords.x, cords.y + x));
+        moves.Add(new Vector2(cords.x, cords.y - x));
+        moves.Add( new Vector2( cords.x + x, cords.y + x));
+        moves.Add( new Vector2(cords.x - x , cords.y - x));
+        moves.Add( new Vector2(cords.x + x, cords.y - x));
+        moves.Add(new Vector2(cords.x - x, cords.y + x));
       }
-
-      for (int y = 0; y < 8; y++)
-      {
-        moves.Add(new Vector2(cords.x, cords.y + y));
-        moves.Add(new Vector2(cords.x, cords.y -y));
-      }
-
       return moves;
 
   }

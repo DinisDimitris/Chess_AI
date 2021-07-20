@@ -58,6 +58,8 @@ public class Board : MonoBehaviour
 
     private Vector2 originPos;
 
+    private List<ObstructedAxis> obstructedMoves = new List<ObstructedAxis>();
+
     private Piece piece;
 
     private Tile prevTile;
@@ -177,6 +179,186 @@ public class Board : MonoBehaviour
         if ( tile.getColour() == 1) spriteRenderer.color = colourY;
     }
 
+    private void DestroyBullets(Vector2 move)
+    {
+        for (int z = bullets.Count - 1; z >= 0 ; z--)
+        {
+            if (bullets[z].transform.position
+                .Equals(move))
+            {
+                Destroy(bullets[z]);
+                bullets.RemoveAt(z);
+            } 
+        }
+    }
+
+    // filter the list of legal moves based on obstructed pieces
+    // i feel sorry for whoever is about to look at this
+    private void FilterMoves(List<ObstructedAxis> obstructedAxisList)
+    {
+        
+        for (int i = 0; i < obstructedAxisList.Count; i++)
+        {
+            ObstructedAxis currentBlocked = obstructedAxisList[i];
+
+            //direction vector
+            Vector2 offset = currentBlocked.Offset();
+
+            Vector2 origin = currentBlocked.getOrigin();
+
+            Vector2 dest = currentBlocked.getNewPos();
+
+            // x axis is the same as our piece , check for moves on the y 
+            if (currentBlocked.xblocked() && !currentBlocked.yblocked())
+            {
+                // positive offset means the obstructed piece is above our current piece
+                if (offset.y > 0)
+                {
+                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    {
+                        Vector2 move = legalMoves[k];
+                        
+                        if (move.x.Equals(origin.x) && move.y > dest.y)
+                        {
+                            DestroyBullets(move);
+                                // illegal move
+                            legalMoves.RemoveAt(k);
+                        }
+
+                        
+                    }
+                }
+                
+                // negative offset means the obstructed piece is below our piece
+                else if (offset.y < 0)
+                {
+                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    {
+                        Vector2 move = legalMoves[k];
+
+                        if (move.x.Equals(origin.x) && move.y < dest.y)
+                        {
+                            
+                            DestroyBullets(move);
+                            legalMoves.RemoveAt(k);
+                            
+                        }
+                    }
+                }
+            }
+            
+            // y is the same, check for moves on the x
+            else if (!currentBlocked.xblocked() && currentBlocked.yblocked())
+            {
+                if (offset.x > 0)
+                {
+                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    {
+                        Vector2 move = legalMoves[k];
+
+                        if (move.y.Equals(origin.y) && move.x > dest.x)
+                        {
+                            
+                            for (int z = bullets.Count - 1; z >= 0 ; z--)
+                            {
+                                if (bullets[z].transform.position
+                                    .Equals(move))
+                                {
+                                    Destroy(bullets[z]);
+                                    bullets.RemoveAt(z);
+                                } 
+                            }
+                            legalMoves.RemoveAt(k);
+                            
+                        }
+                    }
+                    
+                }
+                else if (offset.x < 0)
+                {
+                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    {
+                        Vector2 move = legalMoves[k];
+
+                        if (move.y.Equals(origin.y) && move.x < dest.x)
+                        {
+                            DestroyBullets(move);
+                            legalMoves.RemoveAt(k);
+                            
+                        }
+                    }
+                    
+                }
+            }
+            
+            // diagonal obstruction
+            else if (!currentBlocked.xblocked() && !currentBlocked.yblocked())
+            {
+                if (offset.x.Equals(offset.y) && offset.x > 0 && offset.y > 0 )
+                {
+                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    {
+                        Vector2 move = legalMoves[k];
+                        
+                        if ( move.x > dest.x && move.y  > dest.y )
+                        {
+                            DestroyBullets(move);
+                            legalMoves.RemoveAt(k);
+                            
+                        }
+                    }
+                    
+                }
+                
+                else if (offset.x.Equals(offset.y) && offset.x < 0 && offset.y < 0)
+                {
+                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    {
+                        Vector2 move = legalMoves[k];
+                        
+                        if ( move.x < dest.x && move.y  < dest.y )
+                        {
+                            DestroyBullets(move);
+                            legalMoves.RemoveAt(k);
+                            
+                        }
+                    }
+                }
+                
+                else if (offset.x.Equals(Mathf.Abs(offset.y ) ) && offset.x > 0 && offset.y < 0)
+                {
+                  
+                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    {
+                        Vector2 move = legalMoves[k];
+                        
+                        if ( move.x > dest.x && move.y < dest.y )
+                        {
+                            DestroyBullets(move);
+                            legalMoves.RemoveAt(k);
+                            
+                        }
+                    }
+                }
+                
+                else if (offset.y.Equals(Mathf.Abs(offset.x ) ) && offset.x < 0 && offset.y > 0)
+                {
+                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    {
+                        Vector2 move = legalMoves[k];
+                        
+                        if ( move.x < dest.x && move.y > dest.y )
+                        {
+                            DestroyBullets(move);
+                            legalMoves.RemoveAt(k);
+                            
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private void Update()
     {
         ray = _camera.ScreenPointToRay(Input.mousePosition);
@@ -211,8 +393,8 @@ public class Board : MonoBehaviour
                                 spriteRenderer.color = hitColor;
 
                                 prevTile = boardUpdate[i];
-                                
-                                for (int t = 0; t < legalMoves.Count; t ++)
+                                obstructedMoves = new List<ObstructedAxis>();
+                                for (int t = legalMoves.Count - 1; t >= 0 ; t --)
                                 {
                                     Vector2 dir = legalMoves[t];
                                     if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
@@ -225,48 +407,24 @@ public class Board : MonoBehaviour
                                         }
                                         else
                                         {
-                                            Vector2 dist = dir - originPos;
-                                            
-                                            Debug.Log( "dir" + dir + "originPos" + originPos + "minus will be" + dist );
-
-                                            bool xblocked = dist.x == 0;
-                                            bool yblocked = dist.y == 0;
-                                                
-                                            if (xblocked && !yblocked)
-                                            {
-                                                for (int j = legalMoves.Count-1; j >=0; j--)
-                                                {
-                                                    for (int k = 1; k < cols ; k++)
-                                                    {
-                                                        if (legalMoves[j].Equals(new Vector2(originPos.x,dir.y + k)) && dist.y > 0)
-                                                        {
-                                                            for (int z = bullets.Count - 1; z >= 0 ; z--)
-                                                            {
-                                                                Debug.Log(" z" + z + "bullet:" + bullets[z].transform.position);
-                                                                if (bullets[z].transform.position
-                                                                    .Equals(new Vector2(originPos.x, dir.y + k)))
-                                                                {
-                                                                    Debug.Log("removed " +bullets[z].transform.position);
-                                                                    Destroy(bullets[z]);
-                                                                    bullets.RemoveAt(z);
-                                                                } 
-                                                            }
-                                                            // remove the move with the same direction
-                                                            legalMoves.RemoveAt(j);
-                                                        }
-                                                    }
-                                                }
-                                            }
+                                            obstructedMoves.Add(new ObstructedAxis(originPos, dir));
+                                            legalMoves.RemoveAt(t);
                                         }
                                     }
                                 }
                                 
+                                if (obstructedMoves.Count > 0) FilterMoves(obstructedMoves);
                                 one_click = true;
                             }
                         }
 
                         else
                         {
+                            if (legalMoves.Count < 1)
+                            {
+                                one_click = false;
+                                ResetColour(prevTile);
+                            }
                             foreach (var dir in legalMoves)
                             {
 
