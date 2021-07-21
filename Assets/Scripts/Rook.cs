@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Rook : Piece
@@ -32,6 +33,25 @@ public class Rook : Piece
      {
        return _name;
      }
+     
+     public override List<Vector2> Move()
+     {
+    
+       Vector2 cords = GetPos();
+
+       List<Vector2> moves = new List<Vector2>();
+    
+       for (int x = 0; x < 8; x++)
+       {
+         moves.Add(new Vector2(cords.x + x, cords.y));
+         moves.Add(new Vector2(cords.x -x , cords.y));
+         moves.Add(new Vector2(cords.x, cords.y + x));
+         moves.Add(new Vector2(cords.x, cords.y - x));
+       }
+       return moves;
+
+     }
+
    
      public override Vector2 GetPos()
      {

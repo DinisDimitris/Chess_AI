@@ -66,6 +66,12 @@ public class Board : MonoBehaviour
 
     private List<GameObject> bullets = new List<GameObject>();
 
+    private Player player1;
+
+    private Player player2;
+
+    private int turn = 1;
+
     private void Awake()
     {
         if (!_camera) _camera = Camera.main;
@@ -136,6 +142,9 @@ public class Board : MonoBehaviour
 
             }
         }
+
+        player1 = new Player(1);
+        player2 = new Player(2);
         // shrink to 1d array to access during update
         boardUpdate = jagg2dArray();
     }
@@ -378,9 +387,8 @@ public class Board : MonoBehaviour
 
                         {
                             piece = boardUpdate[i].getPiece();
-
-                            //TODO check for piece type 
-                            if (piece != null)
+                            
+                            if (piece != null && piece.GetColour() == turn)
                             {
                                 legalMoves = piece.Move();
 
@@ -394,6 +402,38 @@ public class Board : MonoBehaviour
 
                                 prevTile = boardUpdate[i];
                                 obstructedMoves = new List<ObstructedAxis>();
+
+                                if (piece.GetName().Equals("pawn") )
+                                {
+                                    if (piece.GetColour() == 1)
+                                    {
+                                        Piece xdiagonal = board[(int) originPos.x - 1, (int) originPos.y + 1]
+                                            .getPiece();
+
+                                        Piece ydiagonal = board[(int) originPos.x + 1, (int) originPos.y + 1]
+                                            .getPiece();
+
+                                        if (xdiagonal != null && !xdiagonal.GetColour().Equals(piece.GetColour()))
+                                            legalMoves.Add(new Vector2(originPos.x - 1, originPos.y + 1));
+
+                                        if (ydiagonal != null && !ydiagonal.GetColour().Equals(piece.GetColour()))
+                                            legalMoves.Add(new Vector2(originPos.x + 1, originPos.y + 1));
+                                    }
+                                    else
+                                    {
+                                        Piece xdiagonal = board[(int) originPos.x + 1, (int) originPos.y - 1]
+                                            .getPiece();
+
+                                        Piece ydiagonal = board[(int) originPos.x - 1, (int) originPos.y - 1]
+                                            .getPiece();
+                                        
+                                        if (xdiagonal != null && !xdiagonal.GetColour().Equals(piece.GetColour()))
+                                            legalMoves.Add(new Vector2(originPos.x +  1, originPos.y - 1));
+
+                                        if (ydiagonal != null && !ydiagonal.GetColour().Equals(piece.GetColour()))
+                                            legalMoves.Add(new Vector2(originPos.x - 1, originPos.y - 1));
+                                    }
+                                }
                                 for (int t = legalMoves.Count - 1; t >= 0 ; t --)
                                 {
                                     Vector2 dir = legalMoves[t];
@@ -403,12 +443,20 @@ public class Board : MonoBehaviour
                                         if (board[(int) dir.x, (int) dir.y].getPiece() == null)
                                         {
                                             bullets.Add(Instantiate(trail, dir, Quaternion.identity));
-                                           
+
                                         }
                                         else
                                         {
-                                            obstructedMoves.Add(new ObstructedAxis(originPos, dir));
-                                            legalMoves.RemoveAt(t);
+                                            if (board[(int) dir.x, (int) dir.y].getPiece().GetColour()
+                                                .Equals(piece.GetColour()))
+                                            {
+                                                obstructedMoves.Add(new ObstructedAxis(originPos, dir));
+                                                legalMoves.RemoveAt(t);
+                                            }
+                                            else
+                                            {
+                                                obstructedMoves.Add(new ObstructedAxis(originPos, dir));
+                                            }
                                         }
                                     }
                                 }
@@ -416,6 +464,7 @@ public class Board : MonoBehaviour
                                 if (obstructedMoves.Count > 0) FilterMoves(obstructedMoves);
                                 one_click = true;
                             }
+
                         }
 
                         else
@@ -443,6 +492,7 @@ public class Board : MonoBehaviour
                                     //TODO optimize
                                     ResetColour(prevTile);
                                     prevTile.setPiece(null);
+                                    turn = turn == 1 ? 0 : 1;
                                     // border check
                                     if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
                                     {
@@ -455,12 +505,36 @@ public class Board : MonoBehaviour
                                     }
                                 }
 
+                                else if (hit.collider.gameObject.transform.position.Equals(dir) &&
+                                          !board[(int) dir.x, (int) dir.y].getPiece().GetColour().Equals(piece.GetColour()))
+                                {
+                                    one_click = false;
+                                    
+                                    ResetColour(prevTile);
+                                    prevTile.setPiece(null);
+                                    if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
+                                    {
+                                        Destroy(board[(int) dir.x , (int) dir.y ].getPiece().GetGameObject());
+                                        
+                                        piece.GetGameObject().transform.position = dir;
+
+                                        piece.SetPos((int) dir.x, (int) dir.y);
+
+                                        //TODO index this on 1d array
+                                        board[(int) dir.x, (int) dir.y].setPiece(piece);
+                                        
+                                        turn = turn == 1 ? 0 : 1;
+                                    }
+                                    
+
+                                }
                                 else
                                 {
 
                                     one_click = false;
                                     
                                     ResetColour(prevTile);
+                                    
 
                                 }
                                 
