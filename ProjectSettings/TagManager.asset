@@ -10,6 +10,8 @@ TagManager:
   - whitePawn
   - darkPawn
   - bullet
+  - bking
+  - wking
   layers:
   - Default
   - TransparentFX

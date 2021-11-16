@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class Board : MonoBehaviour
@@ -14,32 +12,21 @@ public class Board : MonoBehaviour
     
     public GameObject square;
 
-    public GameObject whitePawn;
-
-    public GameObject blackPawn;
-
-    // prefabs used to set game objects to the board
-    public GameObject whiteQueen;
-
-    public GameObject blackQueen;
-
-    public GameObject whiteKing;
-
-    public GameObject blackKing;
-
-    public GameObject whiteRook;
-
-    public GameObject blackRook;
-
-    public GameObject whiteHorse;
-
-    public GameObject blackHorse;
-
-    public GameObject whiteCrazyman;
-
-    public GameObject blackCrazyman;
+    public GameObject blackCrazyman,
+        whiteCrazyman,
+        blackHorse,
+        whiteHorse,
+        blackRook,
+        whiteRook,
+        blackKing,
+        whiteKing,
+        blackQueen,
+        whiteQueen,
+        blackPawn,
+        whitePawn;
 
     public Color hitColor;
+    
     public GameObject trail;
 
 
@@ -53,6 +40,8 @@ public class Board : MonoBehaviour
     RaycastHit hit;
 
     private bool one_click;
+
+    private bool check;
 
     private List<Vector2> legalMoves;
 
@@ -69,9 +58,11 @@ public class Board : MonoBehaviour
     private Player player1;
 
     private Player player2;
+    
 
     private int turn = 1;
 
+    private Vector2 prevMove; 
     private void Awake()
     {
         if (!_camera) _camera = Camera.main;
@@ -104,7 +95,6 @@ public class Board : MonoBehaviour
                     spriteRenderer.color = colourX;
                 }
 
-                //cant instantiate game objects in constructors
                 if (y == 1) board[x, y].setPiece(new Pawn("pawn", x, y, 1, whitePawn));
 
                 else if (y == 6) board[x, y].setPiece(new Pawn("pawn", x, y, 0, blackPawn));
@@ -128,7 +118,6 @@ public class Board : MonoBehaviour
                 else if (x == 2 && y == 0 || x == 5 && y == 0) board[x,y].setPiece(new Crazyman("crazyman",x,y,1,whiteCrazyman));
                 
                 else if (x == 2 && y ==7 || x == 5 && y == 7) board[x,y].setPiece(new Crazyman("crazyman",x,y,0,blackCrazyman));
-
 
 
                 board[x, y].setSquare(Instantiate(board[x, y].getSquare(), new Vector2(x, y), Quaternion.identity));
@@ -169,13 +158,12 @@ public class Board : MonoBehaviour
 
     }
 
-    private void DestroyAll(string tag)
+    private void SetColour(Color color, Tile tile)
     {
-        GameObject[] enemies = GameObject.FindGameObjectsWithTag(tag);
-        for(int i=enemies.Length - 1; i >= 0 ; i--)
-        {
-            Destroy(enemies[i]);
-        }
+        //TODO optimize 
+        GameObject curr_tile = tile.getSquare();
+        SpriteRenderer spriteRenderer = curr_tile.GetComponent<SpriteRenderer>();
+        spriteRenderer.color = color;
     }
 
     private void ResetColour(Tile tile)
@@ -203,7 +191,7 @@ public class Board : MonoBehaviour
 
     // filter the list of legal moves based on obstructed pieces
     // i feel sorry for whoever is about to look at this
-    private void FilterMoves(List<ObstructedAxis> obstructedAxisList)
+    private void FilterMoves(List<ObstructedAxis> obstructedAxisList, List<Vector2> moves)
     {
         
         for (int i = 0; i < obstructedAxisList.Count; i++)
@@ -212,10 +200,15 @@ public class Board : MonoBehaviour
 
             //direction vector
             Vector2 offset = currentBlocked.Offset();
-
+            
+            //base position
             Vector2 origin = currentBlocked.getOrigin();
 
+            //target position
             Vector2 dest = currentBlocked.getNewPos();
+            
+            //Based on target - position , we know which axis is obstructed
+            // then simply compare the other component
 
             // x axis is the same as our piece , check for moves on the y 
             if (currentBlocked.xblocked() && !currentBlocked.yblocked())
@@ -223,15 +216,15 @@ public class Board : MonoBehaviour
                 // positive offset means the obstructed piece is above our current piece
                 if (offset.y > 0)
                 {
-                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    for (int k = moves.Count - 1; k >= 0; k--)
                     {
-                        Vector2 move = legalMoves[k];
+                        Vector2 move = moves[k];
                         
                         if (move.x.Equals(origin.x) && move.y > dest.y)
                         {
                             DestroyBullets(move);
                                 // illegal move
-                            legalMoves.RemoveAt(k);
+                            moves.RemoveAt(k);
                         }
 
                         
@@ -241,15 +234,15 @@ public class Board : MonoBehaviour
                 // negative offset means the obstructed piece is below our piece
                 else if (offset.y < 0)
                 {
-                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    for (int k = moves.Count - 1; k >= 0; k--)
                     {
-                        Vector2 move = legalMoves[k];
+                        Vector2 move = moves[k];
 
                         if (move.x.Equals(origin.x) && move.y < dest.y)
                         {
                             
                             DestroyBullets(move);
-                            legalMoves.RemoveAt(k);
+                            moves.RemoveAt(k);
                             
                         }
                     }
@@ -261,23 +254,15 @@ public class Board : MonoBehaviour
             {
                 if (offset.x > 0)
                 {
-                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    for (int k = moves.Count - 1; k >= 0; k--)
                     {
-                        Vector2 move = legalMoves[k];
+                        Vector2 move = moves[k];
 
                         if (move.y.Equals(origin.y) && move.x > dest.x)
                         {
                             
-                            for (int z = bullets.Count - 1; z >= 0 ; z--)
-                            {
-                                if (bullets[z].transform.position
-                                    .Equals(move))
-                                {
-                                    Destroy(bullets[z]);
-                                    bullets.RemoveAt(z);
-                                } 
-                            }
-                            legalMoves.RemoveAt(k);
+                            DestroyBullets(move);
+                            moves.RemoveAt(k);
                             
                         }
                     }
@@ -285,14 +270,14 @@ public class Board : MonoBehaviour
                 }
                 else if (offset.x < 0)
                 {
-                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    for (int k = moves.Count - 1; k >= 0; k--)
                     {
-                        Vector2 move = legalMoves[k];
+                        Vector2 move = moves[k];
 
                         if (move.y.Equals(origin.y) && move.x < dest.x)
                         {
                             DestroyBullets(move);
-                            legalMoves.RemoveAt(k);
+                            moves.RemoveAt(k);
                             
                         }
                     }
@@ -305,14 +290,14 @@ public class Board : MonoBehaviour
             {
                 if (offset.x.Equals(offset.y) && offset.x > 0 && offset.y > 0 )
                 {
-                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    for (int k = moves.Count - 1; k >= 0; k--)
                     {
-                        Vector2 move = legalMoves[k];
+                        Vector2 move = moves[k];
                         
                         if ( move.x > dest.x && move.y  > dest.y )
                         {
                             DestroyBullets(move);
-                            legalMoves.RemoveAt(k);
+                            moves.RemoveAt(k);
                             
                         }
                     }
@@ -321,14 +306,14 @@ public class Board : MonoBehaviour
                 
                 else if (offset.x.Equals(offset.y) && offset.x < 0 && offset.y < 0)
                 {
-                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    for (int k = moves.Count - 1; k >= 0; k--)
                     {
-                        Vector2 move = legalMoves[k];
+                        Vector2 move = moves[k];
                         
                         if ( move.x < dest.x && move.y  < dest.y )
                         {
                             DestroyBullets(move);
-                            legalMoves.RemoveAt(k);
+                            moves.RemoveAt(k);
                             
                         }
                     }
@@ -337,14 +322,14 @@ public class Board : MonoBehaviour
                 else if (offset.x.Equals(Mathf.Abs(offset.y ) ) && offset.x > 0 && offset.y < 0)
                 {
                   
-                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    for (int k = moves.Count - 1; k >= 0; k--)
                     {
-                        Vector2 move = legalMoves[k];
+                        Vector2 move = moves[k];
                         
                         if ( move.x > dest.x && move.y < dest.y )
                         {
                             DestroyBullets(move);
-                            legalMoves.RemoveAt(k);
+                            moves.RemoveAt(k);
                             
                         }
                     }
@@ -352,20 +337,253 @@ public class Board : MonoBehaviour
                 
                 else if (offset.y.Equals(Mathf.Abs(offset.x ) ) && offset.x < 0 && offset.y > 0)
                 {
-                    for (int k = legalMoves.Count - 1; k >= 0; k--)
+                    for (int k = moves.Count - 1; k >= 0; k--)
                     {
-                        Vector2 move = legalMoves[k];
+                        Vector2 move = moves[k];
                         
                         if ( move.x < dest.x && move.y > dest.y )
                         {
                             DestroyBullets(move);
-                            legalMoves.RemoveAt(k);
+                            moves.RemoveAt(k);
                             
                         }
                     }
                 }
             }
         }
+    }
+
+    private void CheckPawnAttack()
+    {
+        if (piece.GetName().Equals("pawn") )
+        {
+            if (piece.GetColour() == 1)
+            {
+                    var illegalMove = new Vector2(originPos.x,originPos.y + 1);
+                        if (legalMoves.Contains(illegalMove) && board[(int)illegalMove.x, (int)illegalMove.y].getPiece() != null)
+                        {
+                            var potentialIllegalMove = new Vector2(illegalMove.x, illegalMove.y + 1);
+                            if (legalMoves.Contains(potentialIllegalMove))
+                                legalMoves.Remove(potentialIllegalMove);
+                            legalMoves.Remove(illegalMove);
+                        }
+                    
+                
+
+                if (0 <= originPos.x - 1  && originPos.x - 1 <= 7 && 0 <= originPos.y + 1 &&
+                    originPos.y + 1 <= 7)
+                {
+                    Piece xdiagonal = board[(int) originPos.x - 1, (int) originPos.y + 1]
+                        .getPiece();
+
+
+                    if (xdiagonal != null && !xdiagonal.GetColour().Equals(piece.GetColour()))
+                        legalMoves.Add(new Vector2(originPos.x - 1, originPos.y + 1));
+                }
+
+                if (0 <= originPos.x + 1 && originPos.x + 1 <= 7  && 0 <= originPos.y + 1 &&
+                    originPos.y + 1 <= 7)
+                {
+                    Piece ydiagonal = board[(int) originPos.x + 1, (int) originPos.y + 1]
+                        .getPiece();
+
+                    if (ydiagonal != null && !ydiagonal.GetColour().Equals(piece.GetColour()))
+                        legalMoves.Add(new Vector2(originPos.x + 1, originPos.y + 1));
+
+                }
+
+            }
+            else
+            {
+                var illegalMove = new Vector2(originPos.x,originPos.y - 1);
+                if (legalMoves.Contains(illegalMove) && board[(int)illegalMove.x, (int)illegalMove.y].getPiece() != null)
+                {
+                    var potentialIllegalMove = new Vector2(illegalMove.x, illegalMove.y - 1);
+                    if (legalMoves.Contains(potentialIllegalMove))
+                        legalMoves.Remove(potentialIllegalMove);
+                    legalMoves.Remove(illegalMove);
+                    }
+                
+                if (0 <= originPos.x + 1 && originPos.x  + 1 <= 7 && 0 <= originPos.y - 1 &&
+                    originPos.y - 1 <= 7)
+                {
+                    Piece xdiagonal = board[(int) originPos.x + 1, (int) originPos.y - 1]
+                        .getPiece();
+
+                    if (xdiagonal != null && !xdiagonal.GetColour().Equals(piece.GetColour()))
+                        legalMoves.Add(new Vector2(originPos.x + 1, originPos.y - 1));
+                }
+
+                if (0 <= originPos.x - 1 && originPos.x - 1 <= 7 && 0 <= originPos.y - 1 &&
+                    originPos.y - 1 <= 7)
+                {
+                    Piece ydiagonal = board[(int) originPos.x - 1, (int) originPos.y - 1]
+                        .getPiece();
+
+                    if (ydiagonal != null && !ydiagonal.GetColour().Equals(piece.GetColour()))
+                        legalMoves.Add(new Vector2(originPos.x - 1, originPos.y - 1));
+                }
+
+            }
+        }
+    }
+
+    private bool IsChecked(Vector2 move)
+    {
+        Piece attackingPiece = board[(int) move.x, (int) move.y].getPiece();
+
+
+        GameObject king = new GameObject();
+        
+        if (attackingPiece.GetColour() == 1)
+        {
+            king = GameObject.FindGameObjectWithTag("bking");
+        }
+        else
+        {
+            king = GameObject.FindGameObjectWithTag("wking");
+        }
+        Vector2 origPos = attackingPiece.GetPos();
+        List<Vector2> attackingMoves = attackingPiece.Move();
+
+        List<ObstructedAxis> obsMoves = new List<ObstructedAxis>();
+        
+        for (int t = 0; t < attackingMoves.Count; t++)
+        {
+                Vector2 curr = attackingMoves[t];
+
+                if (0 <= curr.x && curr.x <= 7 && 0 <= curr.y && curr.y <= 7)
+                {
+                    if (board[(int) curr.x, (int) curr.y].getPiece() != null)
+                    {
+                        
+                        if (!board[(int) curr.x, (int) curr.y].getPiece().GetName().Equals("king"))
+                        {
+                            obsMoves.Add(new ObstructedAxis(origPos, curr));
+                        }
+                    }
+                }
+
+        }
+            
+            
+        if (obsMoves.Count > 0) FilterMoves(obsMoves, attackingMoves);
+            
+        for (int k = 0; k < attackingMoves.Count; k++)
+        {
+                Vector2 dir = attackingMoves[k];
+                
+                if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
+                {
+                    if (king.transform.position.Equals(dir) )
+                    {
+                        
+                            return true;
+                    }
+                }
+        }
+        
+
+        return false;
+    }
+
+    private List<Vector2> GetAttackingPath(Vector2 kingPos, Vector2 attackingPos)
+    {
+        Vector2 dir = kingPos - attackingPos;
+
+        List<Vector2> attackingPath = new List<Vector2>();
+
+
+        return null;
+    }
+
+    private List<Vector2> RemoveIntersectingMoves(List<Vector2> t1, List<Vector2> t2)
+    {
+        for (int i = 0; i < t1.Count; i++)
+        {
+            for (int z= t2.Count - 1; z >= 0; z--)
+            {
+                if (t1[i].Equals(t2[z])) t2.RemoveAt(z);
+            }
+        }
+
+        return t2;
+    }
+
+    private List<Vector2> GetIntersectingMoves(List<Vector2> t1, List<Vector2> t2)
+    {
+        var t3 = new List<Vector2>();
+        for (int i = 0; i < t1.Count; i++)
+        {
+            for (int z= t2.Count - 1; z >= 0; z--)
+            {
+                if (t1[i].Equals(t2[z])) t3.Add(t2[z]);
+            }
+        }
+
+        return t3;
+    }
+
+    private void InstantiateMoves(List<Vector2> moves, List<ObstructedAxis> obs, List<GameObject> bull)
+    {
+        for (int t = moves.Count - 1; t >= 0 ; t --)
+        {
+            Vector2 dir = moves[t];
+            if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
+            {
+
+                if (board[(int) dir.x, (int) dir.y].getPiece() == null)
+                {
+                    bull.Add(Instantiate(trail, dir, Quaternion.identity));
+
+                }
+                else
+                {
+                    if (board[(int) dir.x, (int) dir.y].getPiece().GetColour()
+                        .Equals(piece.GetColour()))
+                    {
+                        obs.Add(new ObstructedAxis(originPos, dir));
+                        moves.RemoveAt(t);
+                    }
+                    else
+                    {
+                        obs.Add(new ObstructedAxis(originPos, dir));
+                    }
+                }
+            }
+                                    
+        }
+        
+    }
+
+    private List<Piece> GetAllPiecesByColour(int side)
+    {
+        List<Piece> pieces = new List<Piece>();
+        for(int i =0 ; i < boardUpdate.Length; i++){
+            if(boardUpdate[i].getPiece() != null && boardUpdate[i].getColour() == side)
+                pieces.Add(boardUpdate[i].getPiece());
+        }
+
+        return pieces;
+    }
+
+    private List<Piece> GetPiecesThatBlockAttack(List<Vector2> attackingTrajectory, int side )
+    {
+        side = side == 1 ? 0 : 1;
+        var potentialDefendingPieces = GetAllPiecesByColour(side);
+
+        var defendingPieces = new List<Piece>();
+
+        for (int i =0; i < potentialDefendingPieces.Count; i++){
+            var possibleMoves = potentialDefendingPieces[i].Move();
+
+            var blockingMoves = this.GetIntersectingMoves(possibleMoves, attackingTrajectory);
+            if (blockingMoves.Count > 0 ){
+                defendingPieces.Add(potentialDefendingPieces[i]);
+            }
+        }
+        return defendingPieces;
+
     }
 
     private void Update()
@@ -384,85 +602,59 @@ public class Board : MonoBehaviour
                     {
                         
                         if (!one_click)
-
                         {
                             piece = boardUpdate[i].getPiece();
                             
                             if (piece != null && piece.GetColour() == turn)
                             {
-                                legalMoves = piece.Move();
-
                                 originPos = piece.GetPos();
-                                
-                                
-                                //TODO optimize 
-                                GameObject tile = boardUpdate[i].getSquare();
-                                SpriteRenderer spriteRenderer = tile.GetComponent<SpriteRenderer>();
-                                spriteRenderer.color = hitColor;
-
-                                prevTile = boardUpdate[i];
-                                obstructedMoves = new List<ObstructedAxis>();
-
-                                if (piece.GetName().Equals("pawn") )
+                                if (!check)
                                 {
-                                    if (piece.GetColour() == 1)
+                                    legalMoves = piece.Move();
+
+                                    SetColour(hitColor, boardUpdate[i]);
+                                    CheckPawnAttack();
+
+                                    prevTile = boardUpdate[i];
+                                    obstructedMoves = new List<ObstructedAxis>();
+
+                                    InstantiateMoves(legalMoves, obstructedMoves, bullets);
+
+                                    if (obstructedMoves.Count > 0) FilterMoves(obstructedMoves, legalMoves);
+                                    one_click = true;
+                                }
+                                else
+                                {
+                                    var prevPiece = board[(int) prevMove.x, (int) prevMove.y].getPiece();
+                                    var attackingTrajectory = prevPiece.Move();
+
+                                    var piecesBlockingAttack = GetPiecesThatBlockAttack(attackingTrajectory, prevPiece.GetColour());
+
+                                    if (piece.GetName().Equals("king"))
                                     {
-                                        Piece xdiagonal = board[(int) originPos.x - 1, (int) originPos.y + 1]
-                                            .getPiece();
-
-                                        Piece ydiagonal = board[(int) originPos.x + 1, (int) originPos.y + 1]
-                                            .getPiece();
-
-                                        if (xdiagonal != null && !xdiagonal.GetColour().Equals(piece.GetColour()))
-                                            legalMoves.Add(new Vector2(originPos.x - 1, originPos.y + 1));
-
-                                        if (ydiagonal != null && !ydiagonal.GetColour().Equals(piece.GetColour()))
-                                            legalMoves.Add(new Vector2(originPos.x + 1, originPos.y + 1));
+                                        legalMoves = RemoveIntersectingMoves(attackingTrajectory, piece.Move());
                                     }
-                                    else
-                                    {
-                                        Piece xdiagonal = board[(int) originPos.x + 1, (int) originPos.y - 1]
-                                            .getPiece();
-
-                                        Piece ydiagonal = board[(int) originPos.x - 1, (int) originPos.y - 1]
-                                            .getPiece();
+                                    else if (piecesBlockingAttack.Contains(piece)){
                                         
-                                        if (xdiagonal != null && !xdiagonal.GetColour().Equals(piece.GetColour()))
-                                            legalMoves.Add(new Vector2(originPos.x +  1, originPos.y - 1));
-
-                                        if (ydiagonal != null && !ydiagonal.GetColour().Equals(piece.GetColour()))
-                                            legalMoves.Add(new Vector2(originPos.x - 1, originPos.y - 1));
+                                        legalMoves =  GetIntersectingMoves(attackingTrajectory, piece.Move());
                                     }
-                                }
-                                for (int t = legalMoves.Count - 1; t >= 0 ; t --)
-                                {
-                                    Vector2 dir = legalMoves[t];
-                                    if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
-                                    {
-
-                                        if (board[(int) dir.x, (int) dir.y].getPiece() == null)
-                                        {
-                                            bullets.Add(Instantiate(trail, dir, Quaternion.identity));
-
-                                        }
-                                        else
-                                        {
-                                            if (board[(int) dir.x, (int) dir.y].getPiece().GetColour()
-                                                .Equals(piece.GetColour()))
-                                            {
-                                                obstructedMoves.Add(new ObstructedAxis(originPos, dir));
-                                                legalMoves.RemoveAt(t);
-                                            }
-                                            else
-                                            {
-                                                obstructedMoves.Add(new ObstructedAxis(originPos, dir));
-                                            }
-                                        }
-                                    }
-                                }
                                 
-                                if (obstructedMoves.Count > 0) FilterMoves(obstructedMoves);
-                                one_click = true;
+                                    if (legalMoves.Count > 0){
+                                    SetColour(hitColor, boardUpdate[i]); 
+                                    prevTile = boardUpdate[i];
+                                    obstructedMoves = new List<ObstructedAxis>();
+
+                                    InstantiateMoves(legalMoves, obstructedMoves, bullets);
+
+                                    if (obstructedMoves.Count > 0) FilterMoves(obstructedMoves, legalMoves);
+                                    one_click = true;
+                                    }
+
+                                    else{
+                                        
+                                    }
+                                }
+
                             }
 
                         }
@@ -500,6 +692,8 @@ public class Board : MonoBehaviour
 
                                         piece.SetPos((int) dir.x, (int) dir.y);
 
+                                        
+                                        prevMove = dir;
                                         //TODO index this on 1d array
                                         board[(int) dir.x, (int) dir.y].setPiece(piece);
                                     }
@@ -510,6 +704,7 @@ public class Board : MonoBehaviour
                                 {
                                     one_click = false;
                                     
+                                    ResetColour(board[(int) dir.x, (int) dir.y]);
                                     ResetColour(prevTile);
                                     prevTile.setPiece(null);
                                     if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
@@ -522,28 +717,24 @@ public class Board : MonoBehaviour
 
                                         //TODO index this on 1d array
                                         board[(int) dir.x, (int) dir.y].setPiece(piece);
-                                        
+                                        prevMove = dir;
+
                                         turn = turn == 1 ? 0 : 1;
+
                                     }
-                                    
-
                                 }
-                                else
+                                else if (!hit.collider.gameObject.transform.position.Equals(dir))
                                 {
-
                                     one_click = false;
-                                    
                                     ResetColour(prevTile);
-                                    
 
                                 }
                                 
                             }
+                            check = IsChecked(prevMove);
                         }
-
-
-
                     }
+                    
                 }
             }
         }
