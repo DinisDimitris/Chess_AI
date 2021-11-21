@@ -487,14 +487,36 @@ public class Board : MonoBehaviour
         return false;
     }
 
-    private List<Vector2> GetAttackingPath(Vector2 kingPos, Vector2 attackingPos)
+    private List<Vector2> GetAttackingPath(Vector2 kingPos, Vector2 attackingPos, List<Vector2> attackingMoves)
     {
         Vector2 dir = kingPos - attackingPos;
 
         List<Vector2> attackingPath = new List<Vector2>();
 
+        if (dir.x == 0  || dir.y == 0){
+        for (int x = 0; x < dir.x ; x++){
+            for (int y = 0; y < dir.y ; y++){
 
-        return null;
+                var attackMove = new Vector2(attackingPos.x + x, attackingPos.y + y);
+                if (attackingMoves.Contains(attackMove)){
+                    attackingPath.Add(attackMove);
+                }
+            }
+        }
+
+        return attackingPath;
+        }
+
+        for (int k = 0; k < dir.x; k++){
+            var attackMove = new Vector2(attackingPos.x + k , attackingPos.y + k);
+            if (attackingMoves.Contains(attackMove)){
+                    attackingPath.Add(attackMove);
+            }
+
+        }
+
+        return attackingPath;
+
     }
 
     private List<Vector2> RemoveIntersectingMoves(List<Vector2> t1, List<Vector2> t2)
@@ -515,7 +537,7 @@ public class Board : MonoBehaviour
         var t3 = new List<Vector2>();
         for (int i = 0; i < t1.Count; i++)
         {
-            for (int z= t2.Count - 1; z >= 0; z--)
+            for (int z= 0; z < t2.Count; z++)
             {
                 if (t1[i].Equals(t2[z])) t3.Add(t2[z]);
             }
@@ -559,8 +581,8 @@ public class Board : MonoBehaviour
     private List<Piece> GetAllPiecesByColour(int side)
     {
         List<Piece> pieces = new List<Piece>();
-        for(int i =0 ; i < boardUpdate.Length; i++){
-            if(boardUpdate[i].getPiece() != null && boardUpdate[i].getColour() == side)
+        for(int i =0 ; i < boardUpdate.Length ; i++){
+            if(boardUpdate[i].getPiece() != null && boardUpdate[i].getPiece().GetColour() == side)
                 pieces.Add(boardUpdate[i].getPiece());
         }
 
@@ -571,21 +593,23 @@ public class Board : MonoBehaviour
     {
         side = side == 1 ? 0 : 1;
         var potentialDefendingPieces = GetAllPiecesByColour(side);
-
+        Debug.Log(potentialDefendingPieces.Count);
         var defendingPieces = new List<Piece>();
 
         for (int i =0; i < potentialDefendingPieces.Count; i++){
             var possibleMoves = potentialDefendingPieces[i].Move();
+            CheckPawnAttack();
 
             var blockingMoves = this.GetIntersectingMoves(possibleMoves, attackingTrajectory);
             if (blockingMoves.Count > 0 ){
+                if(potentialDefendingPieces[i].GetName() != "king"){
                 defendingPieces.Add(potentialDefendingPieces[i]);
+                }
             }
         }
         return defendingPieces;
 
     }
-
     private void Update()
     {
         ray = _camera.ScreenPointToRay(Input.mousePosition);
@@ -603,6 +627,8 @@ public class Board : MonoBehaviour
                         
                         if (!one_click)
                         {
+
+                            legalMoves = new List<Vector2>();
                             piece = boardUpdate[i].getPiece();
                             
                             if (piece != null && piece.GetColour() == turn)
@@ -626,19 +652,36 @@ public class Board : MonoBehaviour
                                 else
                                 {
                                     var prevPiece = board[(int) prevMove.x, (int) prevMove.y].getPiece();
-                                    var attackingTrajectory = prevPiece.Move();
+                                    var attackingMoves = prevPiece.Move();
 
-                                    var piecesBlockingAttack = GetPiecesThatBlockAttack(attackingTrajectory, prevPiece.GetColour());
+                                    var piecesBlockingAttack = new List<Piece>();
 
+                                    var defendingKing = new GameObject();
+
+                                    if (prevPiece.GetColour() == 1)
+                                        {
+                                            defendingKing = GameObject.FindGameObjectWithTag("bking");
+                                        }
+                                    else
+                                        {
+                                            defendingKing = GameObject.FindGameObjectWithTag("wking");
+                                        }
+
+                                    var attackingPath = GetAttackingPath(defendingKing.transform.position, prevPiece.GetPos(), attackingMoves);
+
+                                    piecesBlockingAttack = GetPiecesThatBlockAttack(attackingPath, prevPiece.GetColour());
+                                    
                                     if (piece.GetName().Equals("king"))
                                     {
-                                        legalMoves = RemoveIntersectingMoves(attackingTrajectory, piece.Move());
+                                        legalMoves = RemoveIntersectingMoves(attackingMoves, piece.Move());
                                     }
-                                    else if (piecesBlockingAttack.Contains(piece)){
-                                        
-                                        legalMoves =  GetIntersectingMoves(attackingTrajectory, piece.Move());
+                            
+                                    if (piecesBlockingAttack.Contains(piece) && prevPiece.GetName() != "horse"){
+                                    
+                                    legalMoves =  GetIntersectingMoves(attackingPath, piece.Move());
+
                                     }
-                                
+            
                                     if (legalMoves.Count > 0){
                                     SetColour(hitColor, boardUpdate[i]); 
                                     prevTile = boardUpdate[i];
@@ -692,8 +735,9 @@ public class Board : MonoBehaviour
 
                                         piece.SetPos((int) dir.x, (int) dir.y);
 
-                                        
+                                    
                                         prevMove = dir;
+                                        
                                         //TODO index this on 1d array
                                         board[(int) dir.x, (int) dir.y].setPiece(piece);
                                     }
@@ -727,7 +771,6 @@ public class Board : MonoBehaviour
                                 {
                                     one_click = false;
                                     ResetColour(prevTile);
-
                                 }
                                 
                             }
