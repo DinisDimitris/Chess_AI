@@ -15,6 +15,8 @@ public static class Utils
         {
             for (int z= t2.Count - 1; z >= 0; z--)
             {
+
+                
                 if (t1[i].Equals(t2[z])) t2.RemoveAt(z);
             }
         }

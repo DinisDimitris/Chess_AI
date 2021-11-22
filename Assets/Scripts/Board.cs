@@ -169,12 +169,11 @@ public class Board : MonoBehaviour
             } 
         }
     }
-    private void FilterMoves(List<Path> obstructedAxisList, List<Vector2> moves)
+    private void FilterMoves(List<Path> blockedPaths, List<Vector2> moves)
     {
-        
-        for (int i = 0; i < obstructedAxisList.Count; i++)
+        for (int i = 0; i < blockedPaths.Count; i++)
         {
-            Path currentBlocked = obstructedAxisList[i];
+            Path currentBlocked = blockedPaths[i];
 
             Vector2 offset = currentBlocked.Offset();
             
@@ -398,7 +397,6 @@ public class Board : MonoBehaviour
     {
         Piece attackingPiece = board[(int) move.x, (int) move.y].getPiece();
 
-
         GameObject king = new GameObject();
         
         if (attackingPiece.GetColour() == 1)
@@ -548,7 +546,12 @@ public class Board : MonoBehaviour
                                 {
                                     var prevPiece = board[(int) prevMove.x, (int) prevMove.y].getPiece();
                                     var attackingMoves = prevPiece.Move();
-
+                                    if (piece.GetName().Equals("king"))
+                                    {
+                                        legalMoves = Utils.RemoveIntersectingMoves(attackingMoves, piece.Move());
+                                    }
+                                
+                                    if (!prevPiece.GetName().Equals("horse")){
                                     var piecesBlockingAttack = new List<Piece>();
 
                                     var defendingKing = new GameObject();
@@ -563,21 +566,20 @@ public class Board : MonoBehaviour
                                             defendingKing = GameObject.FindGameObjectWithTag("wking");
                                         }
 
+                                
+
                                     var attackingPath = DefendKing.GetAttackingPath(defendingKing.transform.position, prevPiece.GetPos(), attackingMoves, lastTurn);
 
+
                                     piecesBlockingAttack = GetPiecesThatBlockAttack(attackingPath, lastTurn);
-                                    
-                                    if (piece.GetName().Equals("king"))
-                                    {
-                                        legalMoves = Utils.RemoveIntersectingMoves(attackingMoves, piece.Move());
-                                    }
-                            
-                                    if (piecesBlockingAttack.Contains(piece) && prevPiece.GetName() != "horse"){
+                                
+                                    if (piecesBlockingAttack.Contains(piece)){
                                     
                                     legalMoves =  Utils.GetIntersectingMoves(attackingPath, piece.Move());
 
                                     }
-            
+                                    
+                                    }
                                     if (legalMoves.Count > 0){
                                     SetColour(hitColor, boardUpdate[i]); 
                                     prevTile = boardUpdate[i];
@@ -592,6 +594,8 @@ public class Board : MonoBehaviour
                                     else{
                                         
                                     }
+                                
+
                                 }
 
                             }
