@@ -1,14 +1,14 @@
 using System;
 using UnityEngine;
 
-public class ObstructedAxis
+public class Path
 {
 
     private Vector2 _originPos;
 
     private Vector2 _newPos;
 
-    public ObstructedAxis(Vector2 originPos, Vector2 newPos)
+    public Path(Vector2 originPos, Vector2 newPos)
     {
         _originPos = originPos;
 
@@ -20,12 +20,12 @@ public class ObstructedAxis
         return _newPos - _originPos;
     }
 
-    public Boolean xblocked()
+    public bool OnX()
     {
         return Offset().x == 0;
     }
 
-    public Boolean yblocked()
+    public bool OnY()
     {
         return Offset().y == 0;
     }
