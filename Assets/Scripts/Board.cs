@@ -169,6 +169,7 @@ public class Board : MonoBehaviour
             } 
         }
     }
+
     private void FilterMoves(List<Path> blockedPaths, List<Vector2> moves)
     {
         for (int i = 0; i < blockedPaths.Count; i++)
@@ -177,9 +178,9 @@ public class Board : MonoBehaviour
 
             Vector2 offset = currentBlocked.Offset();
             
-            Vector2 origin = currentBlocked.getOrigin();
+            Vector2 origin = currentBlocked.GetOriginPos();
 
-            Vector2 dest = currentBlocked.getNewPos();
+            Vector2 dest = currentBlocked.GetTargetPos();
             
             if (currentBlocked.OnX() && !currentBlocked.OnY())
             {
@@ -193,9 +194,7 @@ public class Board : MonoBehaviour
                         {
                             DestroyBullets(move);
                             moves.RemoveAt(k);
-                        }
-
-                        
+                        }  
                     }
                 }
             
@@ -317,7 +316,6 @@ public class Board : MonoBehaviour
             }
         }
     }
-
     private void CheckPawnAttack()
     {
         if (piece.GetName().Equals("pawn") )
@@ -332,6 +330,11 @@ public class Board : MonoBehaviour
                                 legalMoves.Remove(potentialIllegalMove);
                             legalMoves.Remove(illegalMove);
                         }
+
+                    illegalMove.y += 1;
+                    if (legalMoves.Contains(illegalMove) && board[(int)illegalMove.x, (int)illegalMove.y].getPiece() != null){
+                        legalMoves.Remove(illegalMove);
+                    }
                     
                 
 
@@ -367,6 +370,11 @@ public class Board : MonoBehaviour
                     if (legalMoves.Contains(potentialIllegalMove))
                         legalMoves.Remove(potentialIllegalMove);
                     legalMoves.Remove(illegalMove);
+                }
+
+                 illegalMove.y -= 1;
+                    if (legalMoves.Contains(illegalMove) && board[(int)illegalMove.x, (int)illegalMove.y].getPiece() != null){
+                        legalMoves.Remove(illegalMove);
                     }
                 
                 if (0 <= originPos.x + 1 && originPos.x  + 1 <= 7 && 0 <= originPos.y - 1 &&
@@ -567,9 +575,8 @@ public class Board : MonoBehaviour
                                         }
 
                                 
-
-                                    var attackingPath = DefendKing.GetAttackingPath(defendingKing.transform.position, prevPiece.GetPos(), attackingMoves, lastTurn);
-
+                                    Path kingToAttackingPiece = new Path(prevPiece.GetPos(), defendingKing.transform.position);
+                                    var attackingPath = kingToAttackingPiece.GetAllVectorsOnPath();
 
                                     piecesBlockingAttack = GetPiecesThatBlockAttack(attackingPath, lastTurn);
                                 
