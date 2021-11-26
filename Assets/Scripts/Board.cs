@@ -460,36 +460,46 @@ public class Board : MonoBehaviour
         return false;
     }
 
-    private void InstantiateMoves(List<Vector2> moves, List<Path> obs, List<GameObject> bullets, Tile[,] board)
+    private void InstantiateMoves(List<Vector2> moves,List<GameObject> bullets)
     {
-        for (int t = moves.Count - 1; t >= 0 ; t --)
+        legalMoves = RemoveIllegalMoves(moves, board);
+
+        for( int indx = 0 ; indx < legalMoves.Count; indx ++){
+            Vector2 dir = legalMoves[indx];
+            if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7){
+            bullets.Add(Instantiate(trail, dir, Quaternion.identity));
+            }
+        }
+
+    }
+
+    private List<Vector2> RemoveIllegalMoves(List<Vector2> moves, Tile[,] board)
+    {
+        List<Path> blockedPaths = new List<Path>();
+         for (int t = moves.Count - 1; t >= 0 ; t --)
         {
             Vector2 dir = moves[t];
             if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
             {
-
-                if (board[(int) dir.x, (int) dir.y].getPiece() == null)
-                {
-                    bullets.Add(Instantiate(trail, dir, Quaternion.identity));
-
-                }
-                else
-                {
-                    if (board[(int) dir.x, (int) dir.y].getPiece().GetColour()
-                        .Equals(piece.GetColour()))
+                if ( board[(int) dir.x, (int) dir.y].getPiece() != null ){
+                if (board[(int) dir.x, (int) dir.y].getPiece().GetColour()
+                    .Equals(piece.GetColour()))
                     {
-                        obs.Add(new Path(originPos, dir));
+                    blockedPaths.Add(new Path(originPos, dir));
                         moves.RemoveAt(t);
                     }
                     else
                     {
-                        obs.Add(new Path(originPos, dir));
+                        blockedPaths.Add(new Path(originPos, dir));
                     }
                 }
             }
-                                    
+
         }
+        if (blockedPaths.Count > 0)
+            FilterMoves(blockedPaths, moves);
         
+        return moves;                      
     }
     private List<Piece> GetPiecesThatBlockAttack(List<Vector2> attackingTrajectory, int side )
     {
@@ -499,6 +509,8 @@ public class Board : MonoBehaviour
 
         for (int i =0; i < potentialDefendingPieces.Count; i++){
             var possibleMoves = potentialDefendingPieces[i].Move();
+
+
             CheckPawnAttack();
 
             var blockingMoves = Utils.GetIntersectingMoves(possibleMoves, attackingTrajectory);
@@ -543,11 +555,9 @@ public class Board : MonoBehaviour
                                     CheckPawnAttack();
 
                                     prevTile = boardUpdate[i];
-                                    obstructedMoves = new List<Path>();
 
-                                    InstantiateMoves(legalMoves, obstructedMoves, bullets, board);
+                                    InstantiateMoves(legalMoves, bullets);
 
-                                    if (obstructedMoves.Count > 0) FilterMoves(obstructedMoves, legalMoves);
                                     one_click = true;
                                 }
                                 else
@@ -590,11 +600,9 @@ public class Board : MonoBehaviour
                                     if (legalMoves.Count > 0){
                                     SetColour(hitColor, boardUpdate[i]); 
                                     prevTile = boardUpdate[i];
-                                    obstructedMoves = new List<Path>();
 
-                                    InstantiateMoves(legalMoves, obstructedMoves, bullets, board);
+                                    InstantiateMoves(legalMoves, bullets);
 
-                                    if (obstructedMoves.Count > 0) FilterMoves(obstructedMoves, legalMoves);
                                     one_click = true;
                                     }
 
