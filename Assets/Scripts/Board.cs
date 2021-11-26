@@ -333,6 +333,7 @@ public class Board : MonoBehaviour
 
                     illegalMove.y += 1;
                     if (legalMoves.Contains(illegalMove) && board[(int)illegalMove.x, (int)illegalMove.y].getPiece() != null){
+                        Debug.Log("HuH??1");
                         legalMoves.Remove(illegalMove);
                     }
                     
@@ -364,6 +365,7 @@ public class Board : MonoBehaviour
             else
             {
                 var illegalMove = new Vector2(originPos.x,originPos.y - 1);
+                Debug.Log(illegalMove);
                 if (legalMoves.Contains(illegalMove) && board[(int)illegalMove.x, (int)illegalMove.y].getPiece() != null)
                 {
                     var potentialIllegalMove = new Vector2(illegalMove.x, illegalMove.y - 1);
@@ -373,7 +375,9 @@ public class Board : MonoBehaviour
                 }
 
                  illegalMove.y -= 1;
+                 
                     if (legalMoves.Contains(illegalMove) && board[(int)illegalMove.x, (int)illegalMove.y].getPiece() != null){
+                        Debug.Log("HuH??");
                         legalMoves.Remove(illegalMove);
                     }
                 
@@ -462,7 +466,7 @@ public class Board : MonoBehaviour
 
     private void InstantiateMoves(List<Vector2> moves,List<GameObject> bullets)
     {
-        legalMoves = RemoveIllegalMoves(moves, board);
+        legalMoves = RemoveIllegalMoves(moves);
 
         for( int indx = 0 ; indx < legalMoves.Count; indx ++){
             Vector2 dir = legalMoves[indx];
@@ -470,10 +474,9 @@ public class Board : MonoBehaviour
             bullets.Add(Instantiate(trail, dir, Quaternion.identity));
             }
         }
-
     }
 
-    private List<Vector2> RemoveIllegalMoves(List<Vector2> moves, Tile[,] board)
+    private List<Vector2> RemoveIllegalMoves(List<Vector2> moves)
     {
         List<Path> blockedPaths = new List<Path>();
          for (int t = moves.Count - 1; t >= 0 ; t --)
@@ -508,12 +511,13 @@ public class Board : MonoBehaviour
         var defendingPieces = new List<Piece>();
 
         for (int i =0; i < potentialDefendingPieces.Count; i++){
-            var possibleMoves = potentialDefendingPieces[i].Move();
+            var legalMoves = potentialDefendingPieces[i].Move();
 
+            legalMoves = RemoveIllegalMoves(legalMoves);
 
             CheckPawnAttack();
 
-            var blockingMoves = Utils.GetIntersectingMoves(possibleMoves, attackingTrajectory);
+            var blockingMoves = Utils.GetIntersectingMoves(legalMoves, attackingTrajectory);
             if (blockingMoves.Count > 0 ){
                 if(potentialDefendingPieces[i].GetName() != "king"){
                 defendingPieces.Add(potentialDefendingPieces[i]);
@@ -594,6 +598,7 @@ public class Board : MonoBehaviour
                                     
                                     legalMoves =  Utils.GetIntersectingMoves(attackingPath, piece.Move());
 
+                                    CheckPawnAttack();
                                     }
                                     
                                     }
