@@ -29,7 +29,6 @@ public class Board : MonoBehaviour
     
     public GameObject trail;
 
-
     private Tile[,] board = new Tile[cols, rows];
 
     private Tile[] boardUpdate = new Tile[cols * rows];
@@ -58,8 +57,10 @@ public class Board : MonoBehaviour
     private Player player1;
 
     private Player player2;
-    
 
+    private King _wking;
+    
+    private King _bking;
     private int turn = 1;
 
     private Vector2 prevMove; 
@@ -99,9 +100,15 @@ public class Board : MonoBehaviour
 
                 else if (y == 6) board[x, y].setPiece(new Pawn("pawn", x, y, 0, blackPawn));
                 
-                else if (x == 4 && y == 0) board[x, y].setPiece(new King("king", x, y, 1, whiteKing));
+                else if (x == 4 && y == 0) {
+                    _wking = new King("king", x, y, 1, whiteKing);
+                    board[x, y].setPiece(_wking);
+                }
 
-                else if (x == 4 && y == 7) board[x, y].setPiece(new King("king", x, y, 0, blackKing));
+                else if (x == 4 && y == 7) {
+                    _bking = new King("king", x, y, 0, blackKing);
+                    board[x, y].setPiece(_bking);
+                }
                 
                 else if (x == 3 && y == 0) board[x,y].setPiece(new Queen("queen",x,y,1,whiteQueen));
                 
@@ -333,7 +340,7 @@ public class Board : MonoBehaviour
 
                     illegalMove.y += 1;
                     if (legalMoves.Contains(illegalMove) && board[(int)illegalMove.x, (int)illegalMove.y].getPiece() != null){
-                        Debug.Log("HuH??1");
+
                         legalMoves.Remove(illegalMove);
                     }
                     
@@ -365,7 +372,7 @@ public class Board : MonoBehaviour
             else
             {
                 var illegalMove = new Vector2(originPos.x,originPos.y - 1);
-                Debug.Log(illegalMove);
+
                 if (legalMoves.Contains(illegalMove) && board[(int)illegalMove.x, (int)illegalMove.y].getPiece() != null)
                 {
                     var potentialIllegalMove = new Vector2(illegalMove.x, illegalMove.y - 1);
@@ -377,7 +384,6 @@ public class Board : MonoBehaviour
                  illegalMove.y -= 1;
                  
                     if (legalMoves.Contains(illegalMove) && board[(int)illegalMove.x, (int)illegalMove.y].getPiece() != null){
-                        Debug.Log("HuH??");
                         legalMoves.Remove(illegalMove);
                     }
                 
@@ -409,15 +415,15 @@ public class Board : MonoBehaviour
     {
         Piece attackingPiece = board[(int) move.x, (int) move.y].getPiece();
 
-        GameObject king = new GameObject();
+        Piece king;
         
         if (attackingPiece.GetColour() == 1)
         {
-            king = GameObject.FindGameObjectWithTag("bking");
+            king = _bking;
         }
         else
         {
-            king = GameObject.FindGameObjectWithTag("wking");
+            king = _wking;
         }
         Vector2 origPos = attackingPiece.GetPos();
         List<Vector2> attackingMoves = attackingPiece.Move();
@@ -452,9 +458,8 @@ public class Board : MonoBehaviour
                 
                 if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
                 {
-                    if (king.transform.position.Equals(dir) )
+                    if (king.GetPos().Equals(dir) )
                     {
-                        
                             return true;
                     }
                 }
@@ -504,6 +509,40 @@ public class Board : MonoBehaviour
         
         return moves;                      
     }
+
+    private List<Vector2> RemoveAnyMoveThatWouldResultInCheck(List<Vector2> moves){
+
+        var attackingPieces = new List<Piece>();
+        Piece defendingKing;
+
+        if (turn == 1){
+            attackingPieces = Utils.GetAllPiecesByColour(0, boardUpdate);
+            defendingKing = _wking;
+        }
+        else{
+            attackingPieces = Utils.GetAllPiecesByColour(1, boardUpdate);
+            defendingKing = _bking;
+        }
+        List<Vector2> attackingTrajectory = new List<Vector2>();
+        bool isOriginOnAttackingPath = false;
+        for (int i = 0 ; i < attackingPieces.Count; i++){
+            List<Vector2> attackingMoves = attackingPieces[i].Move();
+
+           for (int k =0; k < attackingMoves.Count; k++){
+                isOriginOnAttackingPath = false;
+               if (attackingMoves[k].Equals(defendingKing.GetPos())){
+
+                   Path pathToKing = new Path(attackingPieces[i].GetPos(),defendingKing.GetPos());
+                    attackingTrajectory = pathToKing.GetAllVectorsOnPath();
+
+                    if(attackingTrajectory.Contains(piece.GetPos())){
+                        moves = Utils.GetIntersectingMoves(attackingTrajectory,moves);
+                    }
+               }
+           }
+        }
+        return moves;
+    }
     private List<Piece> GetPiecesThatBlockAttack(List<Vector2> attackingTrajectory, int side )
     {
         side = side == 1 ? 0 : 1;
@@ -544,7 +583,6 @@ public class Board : MonoBehaviour
                         
                         if (!one_click)
                         {
-
                             legalMoves = new List<Vector2>();
                             piece = boardUpdate[i].getPiece();
                             
@@ -554,15 +592,9 @@ public class Board : MonoBehaviour
                                 if (!check)
                                 {
                                     legalMoves = piece.Move();
-
-                                    SetColour(hitColor, boardUpdate[i]);
                                     CheckPawnAttack();
-
-                                    prevTile = boardUpdate[i];
-
-                                    InstantiateMoves(legalMoves, bullets);
-
-                                    one_click = true;
+                                    
+                                    legalMoves = RemoveAnyMoveThatWouldResultInCheck(legalMoves);
                                 }
                                 else
                                 {
@@ -602,20 +634,19 @@ public class Board : MonoBehaviour
                                     }
                                     
                                     }
-                                    if (legalMoves.Count > 0){
-                                    SetColour(hitColor, boardUpdate[i]); 
-                                    prevTile = boardUpdate[i];
-
-                                    InstantiateMoves(legalMoves, bullets);
-
-                                    one_click = true;
-                                    }
-
-                                    else{
+                                }
                                         
-                                    }
-                                
+                                if (legalMoves.Count > 0){
+                                SetColour(hitColor, boardUpdate[i]); 
+                                prevTile = boardUpdate[i];
 
+                                InstantiateMoves(legalMoves, bullets);
+
+                                one_click = true;
+                                }
+
+                                else{
+                                    //check mate
                                 }
 
                             }

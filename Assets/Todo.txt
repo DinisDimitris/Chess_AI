@@ -1,0 +1,9 @@
+Check if any given move would result in check, then remove it.
+Rockade
+En passant (optional)
+Check mate
+UI stuff
+change bullet to red tile colour when attacking a piece
+check symbol 
+sound effects
+end game 

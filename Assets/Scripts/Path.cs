@@ -22,8 +22,8 @@ public class Path
         List<Vector2> path = new List<Vector2>();
         if (dir.y == 0 && dir.x > 0){
             for (int x = 0; x < dir.x ; x++){
-                
               path.Add(new Vector2(_originPos.x + x, _originPos.y));
+              
             }
         }
         else if (dir.y == 0 && dir.x < 0){
