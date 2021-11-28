@@ -132,7 +132,6 @@ public class Pawn : Piece
     
 
   }
-
   public override GameObject GetGameObject()
   {
     return _piece;

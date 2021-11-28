@@ -10,4 +10,5 @@ sound effects
 end game 
 
 fixing:
+pull population of pawn diagonal attack into the population of the pawn moves 
 king moving into moves which will result in check
