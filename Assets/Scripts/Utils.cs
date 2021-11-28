@@ -17,7 +17,9 @@ public static class Utils
             {
 
                 
-                if (t1[i].Equals(t2[z])) t2.RemoveAt(z);
+                if (t1[i].Equals(t2[z])) {
+                    t2.RemoveAt(z);
+                }
             }
         }
 
