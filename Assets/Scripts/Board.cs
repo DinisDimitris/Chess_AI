@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Board : MonoBehaviour
 {
@@ -632,8 +633,7 @@ public class Board : MonoBehaviour
                         if (legalDefendingMoves.Count > 0);
                         {
                             moves = legalDefendingMoves;
-                            _piecesDefendingKing.Add(pathToKing,piece);
-                            
+                            _piecesDefendingKing.Add(pathToKing,piece); 
                         }
                         }
                     }
@@ -694,11 +694,19 @@ public class Board : MonoBehaviour
                                 originPos = piece.GetPos();
                                 if (!check)
                                 {
+                                    if (!_piecesDefendingKing.ContainsValue(piece)){
                                     legalMoves = piece.Move();
 
                                     legalMoves = CheckPawnAttack(legalMoves, piece);
 
                                     legalMoves = RemoveAnyMoveThatWouldResultInCheck(legalMoves);
+                                    }
+                                    else{
+                                        var path = _piecesDefendingKing.FirstOrDefault(entry =>
+                                            EqualityComparer<Piece>.Default.Equals(entry.Value, piece)).Key;
+
+                                        legalMoves = Utils.GetIntersectingMoves(path.GetAllVectorsOnPath(), piece.Move());
+                                    }
                                 }
                                 else
                                 {
@@ -737,6 +745,8 @@ public class Board : MonoBehaviour
                                             legalMoves = Utils.GetIntersectingMoves(attackingPath, piece.Move());
 
                                             legalMoves = CheckPawnAttack(legalMoves, piece);
+
+                                            _piecesDefendingKing.Add(kingToAttackingPiece, piece);
                                         }
 
                                     }
