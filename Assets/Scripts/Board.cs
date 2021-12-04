@@ -46,8 +46,6 @@ public class Board : MonoBehaviour
 
     private Vector2 originPos;
 
-    private List<Path> obstructedMoves = new List<Path>();
-
     private Piece piece;
 
     private Tile prevTile;
@@ -64,6 +62,8 @@ public class Board : MonoBehaviour
     private int turn = 1;
 
     private Vector2 prevMove;
+
+    private Dictionary<Path,Piece> _piecesDefendingKing = new Dictionary<Path,Piece>();
     private void Awake()
     {
         if (!_camera) _camera = Camera.main;
@@ -504,6 +504,8 @@ public class Board : MonoBehaviour
             {
                 if (king.GetPos().Equals(dir))
                 {
+
+                    Debug.Log("King attacked from " + dir + "By " + attackingPiece);
                     return true;
                 }
             }
@@ -580,7 +582,10 @@ public class Board : MonoBehaviour
             List<Vector2> attackingMoves = attackingPieces[i].Move();
             attackingMoves = CheckPawnAttack(attackingMoves, attackingPieces[i]);
 
+            //hack
+            if (piece.GetName() == "king"){
             attackingMoves = RemoveIllegalMoves(attackingMoves, attackingPieces[i]);
+            }
 
             //remove any pawn moves going forward as they cannot capture
             if (attackingPieces[i].GetName() == "pawn")
@@ -614,20 +619,25 @@ public class Board : MonoBehaviour
                     moves = Utils.RemoveIntersectingMoves(attackingMoves, moves);
                     isKingMoving = true;
                 }
-
                 if (attackingMoves.Count > 0)
                 {
                     if (attackingMoves[k].Equals(defendingKing.GetPos()) && !isKingMoving)
                     {
-
-                        Path pathToKing = new Path(attackingPieces[i].GetPos(), defendingKing.GetPos());
+                        Path pathToKing = new Path(attackingMoves[k], defendingKing.GetPos());
                         attackingTrajectory = pathToKing.GetAllVectorsOnPath();
 
-                        if (attackingTrajectory.Contains(piece.GetPos()))
+                        if ( attackingTrajectory.Count > 0){
+                        var legalDefendingMoves = Utils.GetIntersectingMoves(attackingTrajectory,moves);
+
+                        if (legalDefendingMoves.Count > 0);
                         {
-                            moves = Utils.GetIntersectingMoves(attackingTrajectory, moves);
+                            moves = legalDefendingMoves;
+                            _piecesDefendingKing.Add(pathToKing,piece);
+                            
+                        }
                         }
                     }
+                
                 }
             }
         }
@@ -653,6 +663,7 @@ public class Board : MonoBehaviour
                 if (potentialDefendingPieces[i].GetName() != "king")
                 {
                     defendingPieces.Add(potentialDefendingPieces[i]);
+
                 }
             }
         }
@@ -673,7 +684,6 @@ public class Board : MonoBehaviour
 
                     if (Input.GetMouseButtonDown(0))
                     {
-
                         if (!one_click)
                         {
                             legalMoves = new List<Vector2>();
@@ -700,7 +710,7 @@ public class Board : MonoBehaviour
                                         legalMoves = RemoveAnyMoveThatWouldResultInCheck(legalMoves);
                                     }
 
-                                    if (!prevPiece.GetName().Equals("horse"))
+                                    else if (!prevPiece.GetName().Equals("horse"))
                                     {
                                         var piecesBlockingAttack = new List<Piece>();
 
@@ -724,7 +734,6 @@ public class Board : MonoBehaviour
 
                                         if (piecesBlockingAttack.Contains(piece))
                                         {
-
                                             legalMoves = Utils.GetIntersectingMoves(attackingPath, piece.Move());
 
                                             legalMoves = CheckPawnAttack(legalMoves, piece);
@@ -738,13 +747,11 @@ public class Board : MonoBehaviour
                                     prevTile = boardUpdate[i];
 
                                     InstantiateMoves(legalMoves, bullets);
-
                                     one_click = true;
                                 }
 
                                 else
                                 {
-                                    Debug.Log("check mate");
                                 }
 
                             }
@@ -772,9 +779,6 @@ public class Board : MonoBehaviour
                                 //TODO index this on 1d array
                                 if (hit.collider.gameObject.transform.position.Equals(dir) && board[(int)dir.x, (int)dir.y].getPiece() == null)
                                 {
-                                    one_click = false;
-                                    //TODO optimize
-                                    ResetColour(prevTile);
                                     prevTile.setPiece(null);
                                     turn = turn == 1 ? 0 : 1;
                                     // border check
@@ -795,10 +799,7 @@ public class Board : MonoBehaviour
                                 else if (hit.collider.gameObject.transform.position.Equals(dir) &&
                                           !board[(int)dir.x, (int)dir.y].getPiece().GetColour().Equals(piece.GetColour()))
                                 {
-                                    one_click = false;
-
                                     ResetColour(board[(int)dir.x, (int)dir.y]);
-                                    ResetColour(prevTile);
                                     prevTile.setPiece(null);
                                     if (0 <= dir.x && dir.x <= 7 && 0 <= dir.y && dir.y <= 7)
                                     {
@@ -813,15 +814,10 @@ public class Board : MonoBehaviour
                                         prevMove = dir;
 
                                         turn = turn == 1 ? 0 : 1;
-
                                     }
                                 }
-                                else if (!hit.collider.gameObject.transform.position.Equals(dir))
-                                {
-                                    one_click = false;
-                                    ResetColour(prevTile);
-                                }
-
+                                one_click = false;
+                                ResetColour(prevTile);
                             }
                             check = IsChecked(prevMove);
                         }

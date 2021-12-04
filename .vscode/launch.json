@@ -6,11 +6,6 @@
         "name": "Unity Editor",
         "type": "unity",
         "request": "launch" 
-    },
-    {
-        "name": "Linux Player",
-        "type": "unity",
-        "request": "launch"
     }
     
     ]

@@ -8,9 +8,11 @@ public static class Utils
        return vec.x + " " + vec.y;
    }
 
-
-    public static List<Vector2> RemoveIntersectingMoves(List<Vector2> t1, List<Vector2> t2)
+    public static List<Vector2> RemoveIntersectingMoves(List<Vector2> a, List<Vector2> b)
     {
+        List<Vector2> t1 = new List<Vector2>(a);
+        List<Vector2> t2 = new List<Vector2>(b);
+        
         for (int i = 0; i < t1.Count; i++)
         {
             for (int z= t2.Count - 1; z >= 0; z--)
